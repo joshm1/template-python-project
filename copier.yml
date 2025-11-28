@@ -1,0 +1,186 @@
+# Copier Template for Modern Python Projects
+# Based on analysis of 40+ real-world Python projects
+# https://github.com/copier-org/copier
+
+_min_copier_version: "9.0.0"
+
+# Basic Project Information
+project_name:
+  type: str
+  help: "Project name (human-readable, with spaces/capitals)"
+  default: "My Project"
+
+project_slug:
+  type: str
+  help: "Project slug (URL-friendly, lowercase with hyphens)"
+  default: "{{ project_name|lower|replace(' ', '-')|replace('_', '-') }}"
+
+package_name:
+  type: str
+  help: "Python package name (valid Python identifier)"
+  default: "{{ project_slug|replace('-', '_') }}"
+
+description:
+  type: str
+  help: "Short description of the project"
+  default: ""
+
+author_name:
+  type: str
+  help: "Author name"
+
+author_email:
+  type: str
+  help: "Author email"
+
+# Project Type
+project_type:
+  type: str
+  help: "Project type"
+  choices:
+    cli: "CLI Tool (command-line application)"
+    api: "API Service (FastAPI REST API)"
+    library: "Library (distributable package)"
+    monorepo: "Monorepo (multiple packages)"
+  default: "api"
+
+# Python Configuration
+python_version:
+  type: str
+  help: "Minimum Python version"
+  choices:
+    "3.12": "Python 3.12 (stable)"
+    "3.13": "Python 3.13 (latest, recommended)"
+  default: "3.13"
+
+use_hatchling:
+  type: bool
+  help: "Use Hatchling build system? (for distributable packages)"
+  default: "{{ project_type in ['library', 'cli'] }}"
+  when: "{{ project_type != 'monorepo' }}"
+
+# Infrastructure
+use_docker:
+  type: bool
+  help: "Include Docker/Docker Compose configuration?"
+  default: "{{ project_type in ['api', 'monorepo'] }}"
+
+use_devcontainer:
+  type: bool
+  help: "Include VS Code devcontainer configuration?"
+  default: true
+
+database_type:
+  type: str
+  help: "Database type"
+  choices:
+    none: "No database"
+    postgresql: "PostgreSQL (direct)"
+    supabase: "Supabase (PostgreSQL + Auth + Storage)"
+    sqlite: "SQLite"
+  default: "{{ 'postgresql' if project_type == 'api' else 'none' }}"
+  when: "{{ project_type != 'library' }}"
+
+use_alembic:
+  type: bool
+  help: "Include Alembic for database migrations?"
+  default: "{{ database_type == 'postgresql' }}"
+  when: "{{ database_type == 'postgresql' }}"
+
+use_supabase_local:
+  type: bool
+  help: "Run local Supabase stack (docker-compose)?"
+  default: true
+  when: "{{ database_type == 'supabase' }}"
+
+# Development Tools Configuration
+ruff_strictness:
+  type: str
+  help: "Ruff linting strictness level"
+  choices:
+    minimal: "Minimal (E, F - essential errors only)"
+    recommended: "Recommended (add I, N, UP, B - standard best practices)"
+    strict: "Strict (add ALL with opt-outs - maximum safety)"
+  default: "recommended"
+
+dependency_pinning:
+  type: str
+  help: "Dependency version pinning strategy"
+  choices:
+    flexible: "Flexible (>= with upper bounds ~=)"
+    conservative: "Conservative (>= with compatible release)"
+    strict: "Strict (== pinned versions)"
+  default: "flexible"
+
+enable_type_checking:
+  type: bool
+  help: "Enable strict type checking with Pyright?"
+  default: true
+
+enable_testing:
+  type: bool
+  help: "Include pytest and testing infrastructure?"
+  default: true
+
+# Documentation Configuration
+documentation_tier:
+  type: str
+  help: "Documentation level"
+  choices:
+    minimal: "Minimal (README + CLAUDE.md only)"
+    standard: "Standard (+ code-style guides + agent docs)"
+    comprehensive: "Comprehensive (+ architecture diagrams + TodoWrite templates)"
+  default: "standard"
+
+# Claude Code Integration
+setup_claude_code:
+  type: bool
+  help: "Include Claude Code configuration (.claude/ directory)?"
+  default: true
+
+include_slash_commands:
+  type: bool
+  help: "Include slash commands (git-commit, prime, quality-check)?"
+  default: "{{ setup_claude_code }}"
+  when: "{{ setup_claude_code }}"
+
+include_custom_agents:
+  type: bool
+  help: "Include custom agents (test-runner, code-quality-check)?"
+  default: "{{ setup_claude_code }}"
+  when: "{{ setup_claude_code }}"
+
+include_skills:
+  type: bool
+  help: "Include skills (pyright-type-strictness, database-queries, writing-tests)?"
+  default: "{{ setup_claude_code }}"
+  when: "{{ setup_claude_code }}"
+
+include_mcp_servers:
+  type: bool
+  help: "Include MCP server configurations?"
+  default: "{{ setup_claude_code and database_type == 'supabase' }}"
+  when: "{{ setup_claude_code }}"
+
+# Git Configuration
+git_init:
+  type: bool
+  help: "Initialize git repository?"
+  default: true
+
+# Template Configuration
+_templates_suffix: ".jinja"
+_exclude:
+  - "copier.yml"
+  - "copier.yaml"
+  - "~*"
+  - "*.py[co]"
+  - "__pycache__"
+  - ".git"
+  - ".DS_Store"
+
+_tasks:
+  # Post-generation tasks
+  - "{% if git_init %}git init{% endif %}"
+  - "{% if git_init %}git add .{% endif %}"
+  - "{% if git_init %}git commit -m 'Initial commit from template'{% endif %}"
