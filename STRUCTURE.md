@@ -8,11 +8,10 @@ This document describes the base Copier template structure that has been created
 
 ```
 /path/to/template-python-project/
-├── copier.yml          # Copier configuration (186 lines)
+├── copier.yml          # Copier configuration
 ├── README.md           # Template documentation
 ├── STRUCTURE.md        # This file
-└── template/           # Template files directory
-    └── {{project_slug}}/  # Generated project root (uses Jinja2 variable)
+└── template/           # Template files (rendered to project root)
 ```
 
 ## copier.yml Configuration
@@ -67,7 +66,7 @@ Note: Docker and DevContainers are ALWAYS included (not configurable).
 
 ## Template Directory Structure
 
-The `template/{{project_slug}}/` directory contains the complete skeleton for all project types:
+The `template/` directory contains the complete skeleton for all project types:
 
 ### Directory Count: 43 directories
 
@@ -167,14 +166,13 @@ stubs/             # Custom type stubs (.gitkeep)
 
 The template uses Jinja2 variables for dynamic directory naming:
 
-- `{{project_slug}}`: URL-friendly project name (e.g., "my-project")
 - `{{package_name}}`: Python package name (e.g., "my_project")
 
-These will be replaced with actual values during template generation.
+These will be replaced with actual values during template generation. The `project_slug` is used for the output directory name when running `copier copy`.
 
 ## Next Steps
 
-The following template files need to be created in the `template/{{project_slug}}/` directory:
+The following template files need to be created in the `template/` directory:
 
 ### Core Configuration Files
 - [ ] `pyproject.toml.jinja` - Python project configuration
