@@ -1,0 +1,128 @@
+{% if project_type == 'cli' -%}
+"""CLI entry point for {{ project_name }}."""
+
+import click
+from rich.console import Console
+
+console = Console()
+
+
+@click.group()
+@click.version_option()
+def cli() -> None:
+    """{{ project_name }} - {{ project_description }}."""
+    pass
+
+
+@cli.command()
+@click.argument("name", default="World")
+def hello(name: str) -> None:
+    """Greet someone.
+
+    Args:
+        name: Name to greet (default: World)
+    """
+    console.print(f"[bold green]Hello, {name}![/bold green]")
+
+
+@cli.command()
+def info() -> None:
+    """Display project information."""
+    from {{ package_name }} import __version__
+
+    console.print(f"[bold blue]{{ project_name }}[/bold blue] v{__version__}")
+    console.print("A modern Python CLI tool")
+
+
+if __name__ == "__main__":
+    cli()
+{% elif project_type == 'api' -%}
+"""FastAPI application entry point."""
+
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+{% if database_type != 'none' -%}
+
+from {{ package_name }}.core.database import engine, init_db
+{% endif -%}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan events.
+
+    Args:
+        app: FastAPI application instance
+    """
+{%- if database_type != 'none' %}
+    # Initialize database
+    await init_db()
+{%- endif %}
+    yield
+{%- if database_type != 'none' %}
+    # Cleanup
+    await engine.dispose()
+{%- endif %}
+
+
+app = FastAPI(
+    title="{{ project_name }}",
+    description="{{ project_description }}",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+async def root() -> dict[str, str]:
+    """Root endpoint.
+
+    Returns:
+        Welcome message
+    """
+    return {"message": "{{ project_name }} API", "version": "0.1.0"}
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    """Health check endpoint.
+
+    Returns:
+        Health status
+    """
+{%- if database_type != 'none' %}
+    # TODO: Add database connectivity check
+    # from sqlalchemy import text
+    # async with engine.begin() as conn:
+    #     await conn.execute(text("SELECT 1"))
+{%- endif %}
+    return {"status": "healthy"}
+
+
+# Register API routes
+# from {{ package_name }}.api.routes import router as api_router
+# app.include_router(api_router, prefix="/api/v1")
+{% else -%}
+"""Main module for {{ project_name }}."""
+
+
+def main() -> None:
+    """Main entry point."""
+    print("{{ project_name }} - {{ project_description }}")
+
+
+if __name__ == "__main__":
+    main()
+{% endif -%}
