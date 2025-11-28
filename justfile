@@ -135,9 +135,8 @@ clean-test:
 # Pre-generated Test Project
 # =============================================================================
 
-# Regenerate the test project (test-generated-api-sqlite)
-# This project is committed to source for manual testing and CI quality checks
-regenerate-test-project:
+# Generate/regenerate the test project (test-generated-api-sqlite)
+test-project-generate:
     #!/usr/bin/env bash
     set -euo pipefail
 
