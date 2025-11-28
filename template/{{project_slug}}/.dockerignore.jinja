@@ -1,0 +1,93 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov/
+.tox/
+
+# Type checking
+.mypy_cache
+.pyright
+.ruff_cache
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# DevContainer
+.devcontainer/
+
+# Documentation
+docs/
+*.md
+{% if project_type != 'library' -%}
+LICENSE
+{% endif %}
+
+# Development tools
+.pre-commit-config.yaml
+.editorconfig
+
+# Environment files (should be passed via Docker env vars)
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Database files (for SQLite)
+{% if database_type == 'sqlite' -%}
+*.db
+*.sqlite
+*.sqlite3
+{% endif %}
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+{% if project_type == 'monorepo' -%}
+# Monorepo - exclude package-specific artifacts
+packages/*/__pycache__
+packages/*/.pytest_cache
+packages/*/.mypy_cache
+packages/*/.ruff_cache
+packages/*/dist
+packages/*/build
+packages/*/*.egg-info
+{% endif %}

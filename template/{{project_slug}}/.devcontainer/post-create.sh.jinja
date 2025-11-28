@@ -1,0 +1,74 @@
+#!/bin/bash
+set -e
+
+echo "==> Running post-create setup..."
+
+# Copy host git config if it exists
+if [ -f /home/vscode/.gitconfig-host ]; then
+    echo "==> Copying git config from host..."
+    cp /home/vscode/.gitconfig-host /home/vscode/.gitconfig
+fi
+
+# Copy host SSH keys if they exist
+if [ -d /home/vscode/.ssh-host ]; then
+    echo "==> Copying SSH keys from host..."
+    cp -r /home/vscode/.ssh-host /home/vscode/.ssh
+    chmod 700 /home/vscode/.ssh
+    chmod 600 /home/vscode/.ssh/* 2>/dev/null || true
+fi
+
+# Install Python dependencies
+echo "==> Installing Python dependencies with UV..."
+uv sync
+
+# Install pre-commit hooks
+echo "==> Installing pre-commit hooks..."
+uv run pre-commit install
+
+{% if database_type == 'postgresql' -%}
+# Wait for database to be ready
+echo "==> Waiting for database..."
+until pg_isready -h db -U postgres; do
+  echo "Database is unavailable - sleeping"
+  sleep 1
+done
+echo "==> Database is ready!"
+
+{% if use_alembic -%}
+# Run migrations
+echo "==> Running database migrations..."
+uv run alembic upgrade head
+{% endif -%}
+{% elif database_type == 'supabase' -%}
+{% if use_supabase_local -%}
+# Wait for database to be ready
+echo "==> Waiting for Supabase database..."
+until pg_isready -h db -U postgres; do
+  echo "Database is unavailable - sleeping"
+  sleep 1
+done
+echo "==> Supabase database is ready!"
+
+# Note: Full Supabase stack should be started separately
+echo ""
+echo "==> To start the full Supabase stack (with Studio, Auth, Storage, etc.):"
+echo "    cd supabase && docker-compose up -d"
+echo "    Then access Supabase Studio at: http://localhost:58172"
+echo ""
+{% else -%}
+# Using remote Supabase
+echo "==> Using remote Supabase instance"
+echo "==> Make sure your .env file contains SUPABASE_URL and SUPABASE_ANON_KEY"
+{% endif -%}
+{% endif -%}
+
+{% if project_type == 'api' -%}
+echo ""
+echo "==> Setup complete! Run 'just dev' to start the development server."
+{% elif project_type == 'cli' -%}
+echo ""
+echo "==> Setup complete! Run 'just install' to install the CLI tool."
+{% else -%}
+echo ""
+echo "==> Setup complete! Run 'just' to see available commands."
+{% endif %}

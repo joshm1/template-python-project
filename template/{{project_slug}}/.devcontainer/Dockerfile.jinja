@@ -1,0 +1,69 @@
+FROM mcr.microsoft.com/devcontainers/python:{{ python_version }}
+
+# Install system dependencies
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        {% if database_type == 'postgresql' or database_type == 'supabase' -%}
+        postgresql-client \
+        {% endif -%}
+        # Modern CLI tools (universal across all projects)
+        ripgrep \      # Fast grep replacement (rg command)
+        fd-find \      # Fast find replacement (fd command)
+        bat \          # Cat with syntax highlighting
+        exa \          # Modern ls replacement
+        fzf \          # Fuzzy finder for command history
+        ncdu \         # Disk usage analyzer
+        tldr \         # Simplified man pages
+        httpie \       # Better curl/wget for APIs
+        jq \           # JSON processor
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+# Create symlinks for Debian naming quirks
+RUN ln -s /usr/bin/fd-find /usr/local/bin/fd && \
+    ln -s /usr/bin/batcat /usr/local/bin/bat
+
+# Install uv (modern Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && mv /root/.local/bin/uv /usr/local/bin/ \
+    && mv /root/.local/bin/uvx /usr/local/bin/
+
+# Install just task runner (always included)
+RUN JUST_VERSION=$(curl -s https://api.github.com/repos/casey/just/releases/latest | jq -r .tag_name) && \
+    ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in \
+        amd64) JUST_ARCH="x86_64-unknown-linux-musl" ;; \
+        arm64) JUST_ARCH="aarch64-unknown-linux-musl" ;; \
+    esac && \
+    curl -L "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-${JUST_ARCH}.tar.gz" -o just.tar.gz && \
+    tar -xzf just.tar.gz && \
+    mv just /usr/local/bin/ && \
+    rm -rf just.tar.gz
+
+# Install delta (modern git diff viewer)
+RUN DELTA_VERSION=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | jq -r .tag_name) && \
+    ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in \
+        amd64) DELTA_ARCH="x86_64-unknown-linux-gnu" ;; \
+        arm64) DELTA_ARCH="aarch64-unknown-linux-gnu" ;; \
+    esac && \
+    curl -L "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/delta-${DELTA_VERSION}-${DELTA_ARCH}.tar.gz" -o delta.tar.gz && \
+    tar -xzf delta.tar.gz && \
+    mv "delta-${DELTA_VERSION}-${DELTA_ARCH}/delta" /usr/local/bin/ && \
+    rm -rf delta.tar.gz "delta-${DELTA_VERSION}-${DELTA_ARCH}"
+
+# Install Node.js 22 LTS for Claude Code CLI
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install global Node.js tools
+RUN npm install -g pnpm diff-so-fancy
+
+# Install Claude Code CLI
+RUN npm install -g @anthropic-ai/claude-code@latest
+
+# Create workspace directory
+RUN mkdir -p /workspace && chown vscode:vscode /workspace
+
+WORKDIR /workspace

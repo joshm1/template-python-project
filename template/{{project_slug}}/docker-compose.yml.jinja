@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: {{ project_slug }}-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      {% if database_type == 'postgresql' -%}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/{{ project_slug }}}
+      {% elif database_type == 'supabase' -%}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      {% elif database_type == 'sqlite' -%}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///app/data/db.sqlite3}
+      {% endif -%}
+    {% if database_type == 'postgresql' -%}
+    depends_on:
+      db:
+        condition: service_healthy
+      {% if use_alembic -%}
+      migrate:
+        condition: service_completed_successfully
+      {% endif -%}
+    {% elif database_type == 'sqlite' -%}
+    volumes:
+      - sqlite-data:/app/data
+    {% endif -%}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - {{ project_slug }}-network
+
+{% if database_type == 'postgresql' -%}
+  db:
+    image: postgres:16-alpine
+    container_name: {{ project_slug }}-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-{{ project_slug }}}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - {{ project_slug }}-network
+
+  {% if use_alembic -%}
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    container_name: {{ project_slug }}-migrate
+    command: ["uv", "run", "alembic", "upgrade", "head"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/{{ project_slug }}}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - {{ project_slug }}-network
+  {% endif -%}
+{% endif %}
+
+networks:
+  {{ project_slug }}-network:
+    driver: bridge
+
+volumes:
+{% if database_type == 'postgresql' -%}
+  postgres-data:
+    driver: local
+{% elif database_type == 'sqlite' -%}
+  sqlite-data:
+    driver: local
+{% endif %}
