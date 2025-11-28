@@ -1,0 +1,131 @@
+{% if project_type == 'api' -%}
+"""Integration test configuration.
+
+Integration tests run against the actual application with a separate test database.
+
+Note: These are true integration tests against a running server. Transaction isolation
+is achieved via a separate test database (temp file for SQLite, dedicated test DB for
+PostgreSQL). For unit tests with per-test transaction rollback, see tests/conftest.py.
+"""
+
+import asyncio
+import os
+import socket
+from collections.abc import AsyncGenerator, Generator
+
+import httpx
+import pytest
+import uvicorn
+from starlette import status
+
+
+{% if database_type != 'none' -%}
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_database(tmp_path_factory: pytest.TempPathFactory) -> Generator[None, None, None]:
+    """Set up test database environment variable."""
+{% if database_type == 'sqlite' %}
+    # Use a temp directory for the test database
+    tmp_dir = tmp_path_factory.mktemp("db")
+    test_db = tmp_dir / "test_integration.db"
+
+    # Set DATABASE_URL before any imports happen
+    os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{test_db}"
+
+    yield
+
+    # Cleanup
+    if test_db.exists():
+        test_db.unlink()
+{% elif database_type == 'postgresql' %}
+    # Use a separate test database for integration tests
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/{{ project_slug }}_integration_test"
+
+    yield
+{% elif database_type == 'supabase' %}
+    # Use local Supabase for integration tests
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:54322/postgres"
+
+    yield
+{% endif %}
+
+
+{% endif -%}
+def get_free_port() -> int:
+    """Get a free port on localhost."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
+
+
+class UvicornTestServer:
+    """Uvicorn test server for running FastAPI in tests."""
+
+    def __init__(self, app: str | None = None, host: str = "127.0.0.1", port: int = 0) -> None:
+        self.host = host
+        self.port = port or get_free_port()
+        self.app = app or "{{ package_name }}.main:app"
+        self._server: uvicorn.Server | None = None
+        self._task: asyncio.Task[None] | None = None
+
+    @property
+    def base_url(self) -> str:
+        return f"http://{self.host}:{self.port}"
+
+    async def start(self) -> None:
+        """Start the test server."""
+        config = uvicorn.Config(
+            app=self.app,
+            host=self.host,
+            port=self.port,
+            log_level="warning",
+        )
+        self._server = uvicorn.Server(config)
+        self._task = asyncio.create_task(self._server.serve())
+
+        # Wait for server to start
+        await self._wait_for_server()
+
+    async def _wait_for_server(self, timeout: float = 10.0) -> None:
+        """Wait for server to be ready."""
+        start_time = asyncio.get_event_loop().time()
+        async with httpx.AsyncClient() as client:
+            while True:
+                try:
+                    response = await client.get(f"{self.base_url}/health")
+                    if response.status_code == status.HTTP_200_OK:
+                        return
+                except httpx.ConnectError:
+                    pass
+
+                if asyncio.get_event_loop().time() - start_time > timeout:
+                    raise TimeoutError(f"Server did not start within {timeout} seconds")
+
+                await asyncio.sleep(0.1)
+
+    async def stop(self) -> None:
+        """Stop the test server."""
+        if self._server:
+            self._server.should_exit = True
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+
+
+@pytest.fixture
+async def test_server() -> AsyncGenerator[UvicornTestServer, None]:
+    """Fixture that provides a running test server."""
+    server = UvicornTestServer()
+    await server.start()
+    yield server
+    await server.stop()
+
+
+@pytest.fixture
+async def client(test_server: UvicornTestServer) -> AsyncGenerator[httpx.AsyncClient, None]:
+    """Fixture that provides an HTTP client connected to the test server."""
+    async with httpx.AsyncClient(base_url=test_server.base_url) as client:
+        yield client
+{% endif -%}

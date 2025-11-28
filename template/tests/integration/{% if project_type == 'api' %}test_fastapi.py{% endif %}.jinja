@@ -1,0 +1,46 @@
+{% if project_type == 'api' -%}
+"""FastAPI integration tests."""
+
+import httpx
+import pytest
+from starlette import status
+
+
+@pytest.mark.integration
+async def test_health_endpoint(client: httpx.AsyncClient) -> None:
+    """Test health endpoint returns healthy status and verifies database connectivity."""
+    response = await client.get("/health")
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["status"] == "healthy"
+{% if database_type != 'none' %}
+    # Verify database connectivity via timestamp
+    assert "database_timestamp" in data
+    timestamp = data["database_timestamp"]
+    assert timestamp is not None
+
+{% if database_type == 'sqlite' %}
+    # SQLite datetime format: YYYY-MM-DD HH:MM:SS
+    parts = timestamp.split(" ")
+    assert len(parts) == 2, f"Expected 'YYYY-MM-DD HH:MM:SS' format, got: {timestamp}"
+    date_part, time_part = parts
+    assert len(date_part.split("-")) == 3, f"Invalid date format: {date_part}"
+    assert len(time_part.split(":")) == 3, f"Invalid time format: {time_part}"
+{% else %}
+    # PostgreSQL datetime format includes date separators
+    assert "-" in timestamp, f"Expected datetime format, got: {timestamp}"
+{% endif %}
+{% endif %}
+
+
+@pytest.mark.integration
+async def test_root_endpoint(client: httpx.AsyncClient) -> None:
+    """Test root endpoint returns API info."""
+    response = await client.get("/")
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "message" in data
+    assert "version" in data
+{% endif -%}

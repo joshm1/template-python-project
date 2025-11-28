@@ -33,6 +33,11 @@ update:
 
     @echo "✓ Dependencies updated"
 
+# Update project from copier template
+copier-update:
+    copier update --trust
+    @echo "✓ Template updated"
+
 {% if project_type == 'cli' -%}
 # Start development CLI (show help)
 dev:

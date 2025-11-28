@@ -1,6 +1,20 @@
 """Core package for {{ project_name }}."""
 {% if database_type != 'none' %}
-from {{ package_name }}.core.database import Base, engine, get_db, init_db
+from {{ package_name }}.core.database import (
+    Base,
+    SessionDepends,
+    check_database_connection,
+    engine,
+    get_session,
+    init_db,
+)
 
-__all__ = ["Base", "engine", "get_db", "init_db"]
+__all__ = [
+    "Base",
+    "SessionDepends",
+    "check_database_connection",
+    "engine",
+    "get_session",
+    "init_db",
+]
 {% endif %}

@@ -3,13 +3,39 @@
 Main application entry point.
 """
 
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+{% if database_type != 'none' -%}
 
+from {{ package_name }}_common.database import (
+    SessionDepends,
+    check_database_connection,
+    engine,
+    init_db,
+)
+{% endif %}
+
+
+{% if database_type != 'none' -%}
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan events."""
+    await init_db()
+    yield
+    await engine.dispose()
+
+
+{% endif -%}
 app = FastAPI(
     title="{{ project_name }} API",
     description="{{ description }}",
     version="0.1.0",
+{% if database_type != 'none' -%}
+    lifespan=lifespan,
+{% endif -%}
 )
 
 # Configure CORS
@@ -22,10 +48,21 @@ app.add_middleware(
 )
 
 
+{% if database_type != 'none' -%}
+@app.get("/health")
+async def health_check(session: SessionDepends) -> dict[str, str | bool]:
+    """Health check endpoint with database connectivity check."""
+    db_healthy = await check_database_connection(session)
+    return {
+        "status": "healthy" if db_healthy else "unhealthy",
+        "database": db_healthy,
+    }
+{% else -%}
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
+{% endif %}
 
 
 @app.get("/")

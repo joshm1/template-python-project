@@ -79,6 +79,12 @@ database_type:
   default: "{{ 'postgresql' if project_type == 'api' else 'none' }}"
   when: "{{ project_type != 'library' }}"
 
+fastapi_port:
+  type: int
+  help: "Host port to forward for FastAPI server (avoids conflicts with other projects)"
+  default: 8000
+  when: "{{ project_type == 'api' }}"
+
 # User-facing alembic question (only shown for postgresql/sqlite)
 _use_alembic_input:
   type: bool

@@ -9,25 +9,25 @@ license = {text = "MIT"}
 {% endif -%}
 dependencies = [
     {% if project_type == 'cli' -%}
-    "click>=8.0.0",
+    "click>=8.1.0",
     "rich>=13.0.0",
     "loguru>=0.7.0",
     {% elif project_type == 'api' -%}
-    "fastapi>=0.119.0",
-    "uvicorn[standard]>=0.38.0",
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
     {% if database_type == 'postgresql' -%}
-    "sqlalchemy[asyncio]>=2.0.0",
+    "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.30.0",
     {% if use_alembic -%}
-    "alembic>=1.17.0",
+    "alembic>=1.14.0",
     {% endif -%}
     {% elif database_type == 'supabase' -%}
     "supabase>=2.0.0",
     "httpx>=0.28.0",  # For async requests
     {% elif database_type == 'sqlite' -%}
-    "sqlalchemy>=2.0.0",
+    "sqlalchemy[asyncio]>=2.0.30",
     "aiosqlite>=0.20.0",
     {% endif -%}
     {% elif project_type == 'library' -%}
@@ -57,16 +57,16 @@ packages = ["src/{{ package_name }}"]
 
 [dependency-groups]
 dev = [
-    "pyright>=1.1.390",
-    "ruff>=0.7.0",
-    "pytest>=8.0.0",
+    "pyright>=1.1.400",
+    "ruff>=0.11.0",
+    "pytest>=8.3.0",
     {% if project_type == 'api' or database_type != 'none' -%}
-    "pytest-asyncio>=0.24.0",
+    "pytest-asyncio>=1.0.0",
     "pytest-xdist>=3.6.0",  # Parallel test execution
     "pytest-timeout>=2.3.0",  # Timeout protection
     {% endif -%}
     {% if project_type == 'api' -%}
-    "pytest-cov>=5.0.0",
+    "pytest-cov>=6.0.0",
     "httpx>=0.28.0",  # For testing FastAPI
     {% endif -%}
     "pre-commit>=4.0.0",

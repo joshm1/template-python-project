@@ -98,9 +98,9 @@
   },
 
   {% if project_type == 'api' -%}
-  "forwardPorts": [8000],
+  "forwardPorts": [{{ fastapi_port }}],
   "portsAttributes": {
-    "8000": {
+    "{{ fastapi_port }}": {
       "label": "{{ project_name }} API",
       "onAutoForward": "notify"
     }

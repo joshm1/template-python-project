@@ -46,7 +46,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 {% if database_type != 'none' -%}
 
-from {{ package_name }}.core.database import engine, init_db
+from {{ package_name }}.core.database import (
+    SessionDepends,
+    check_database_connection,
+    engine,
+    init_db,
+)
 {% endif -%}
 
 
@@ -95,6 +100,26 @@ async def root() -> dict[str, str]:
     return {"message": "{{ project_name }} API", "version": "0.1.0"}
 
 
+{% if database_type != 'none' -%}
+@app.get("/health")
+async def health(session: SessionDepends) -> dict[str, str | None]:
+    """Health check endpoint.
+
+    Checks database connectivity and returns service health status.
+
+    Args:
+        session: Database session (auto-injected)
+
+    Returns:
+        Health status with database timestamp
+    """
+    db_timestamp = await check_database_connection(session)
+
+    return {
+        "status": "healthy" if db_timestamp else "unhealthy",
+        "database_timestamp": db_timestamp,
+    }
+{% else -%}
 @app.get("/health")
 async def health() -> dict[str, str]:
     """Health check endpoint.
@@ -102,13 +127,8 @@ async def health() -> dict[str, str]:
     Returns:
         Health status
     """
-{%- if database_type != 'none' %}
-    # TODO: Add database connectivity check
-    # from sqlalchemy import text
-    # async with engine.begin() as conn:
-    #     await conn.execute(text("SELECT 1"))
-{%- endif %}
     return {"status": "healthy"}
+{% endif %}
 
 
 # Register API routes
