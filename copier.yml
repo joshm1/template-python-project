@@ -3,6 +3,7 @@
 # https://github.com/copier-org/copier
 #
 # Always included (not configurable):
+# - Docker and VS Code devcontainer (consistent development environment)
 # - Pyright strict type checking
 # - pytest testing infrastructure
 # - pre-commit hooks
@@ -11,7 +12,6 @@
 # - rich terminal output
 # - Click for CLI
 # - Hatchling build system
-# - VS Code devcontainer
 
 _min_copier_version: "9.0.0"
 
@@ -70,10 +70,9 @@ python_version:
   default: "3.13"
 
 # Infrastructure
-use_docker:
-  type: bool
-  help: "Include Docker/Docker Compose configuration?"
-  default: true
+# NOTE: Docker and DevContainers are ALWAYS included (not configurable).
+# All projects use Docker Compose for services and VS Code devcontainer
+# for consistent development environments.
 
 database_type:
   type: str

@@ -36,12 +36,12 @@ The main template configuration file includes:
 - `python_version`: 3.12 or 3.13
 - `use_hatchling`: Build system choice
 
-#### Infrastructure (5)
-- `use_docker`: Docker/docker-compose support
-- `use_devcontainer`: VS Code devcontainer
+#### Infrastructure (3)
 - `database_type`: none/postgresql/supabase/sqlite
 - `use_alembic`: Database migrations
 - `use_supabase_local`: Local Supabase stack
+
+Note: Docker and DevContainers are ALWAYS included (not configurable).
 
 #### Development Tools (5)
 - `ruff_strictness`: minimal/recommended/strict
@@ -257,7 +257,7 @@ ls -la
 
 Some directories should only appear in certain project types:
 
-- `.devcontainer/` - if `use_devcontainer`
+- `.devcontainer/` - ALWAYS included (Docker and DevContainers are not configurable)
 - `alembic/` - if `use_alembic`
 - `supabase/` - if `database_type == 'supabase'`
 - `packages/` - if `project_type == 'monorepo'`

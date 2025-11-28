@@ -18,10 +18,8 @@
         "redhat.vscode-yaml",            // YAML (docker-compose, GitHub Actions)
         "skellock.just",                 // Justfile syntax
 
-        {% if use_docker -%}
-        // Docker
+        // Docker (always included)
         "ms-azuretools.vscode-docker",
-        {% endif -%}
 
         // Git & productivity
         "eamodio.gitlens",

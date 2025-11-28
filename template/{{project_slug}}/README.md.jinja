@@ -34,7 +34,7 @@ just install
 # Start local Supabase stack
 just supabase-start
 
-{% elif database_type == 'postgresql' and use_docker -%}
+{% elif database_type == 'postgresql' -%}
 # Start database
 just db-start
 
@@ -191,7 +191,6 @@ Services:
 This project uses PostgreSQL for the database.
 
 ```bash
-{% if use_docker -%}
 # Start database
 just db-start
 
@@ -201,7 +200,6 @@ just db-stop
 # Connect to database
 just db-psql
 
-{% endif -%}
 {% if use_alembic -%}
 # Run migrations
 just migrate
@@ -219,7 +217,6 @@ This project uses SQLite for the database. The database file will be created aut
 
 {% endif -%}
 {% endif -%}
-{% if use_docker -%}
 ### Docker
 
 ```bash
@@ -236,7 +233,6 @@ just docker-down
 just docker-logs
 ```
 
-{% endif -%}
 ## Testing
 
 ```bash

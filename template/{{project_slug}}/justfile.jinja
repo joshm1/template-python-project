@@ -184,7 +184,7 @@ migrate-new name:
 migrate-status:
     supabase migration list
 
-{% elif database_type == 'postgresql' and use_docker -%}
+{% elif database_type == 'postgresql' -%}
 # Start database and services
 db-start:
     docker compose up -d
@@ -234,7 +234,6 @@ migrate-current:
     {{UV_RUN}} alembic current
 
 {% endif -%}
-{% if use_docker -%}
 # Build Docker image
 docker-build:
     docker compose build
@@ -261,7 +260,6 @@ docker-logs-service service:
 docker-restart service:
     docker compose restart {{service}}
 
-{% endif -%}
 # Clean up Python cache files
 clean:
     find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true

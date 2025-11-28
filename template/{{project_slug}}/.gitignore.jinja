@@ -74,8 +74,7 @@ pyrightconfig.json.user
 .env.test.local
 {% endif %}
 
-{% if use_docker -%}
-# Docker
+# Docker (always included)
 docker-compose.override.yml
 {% if database_type == 'postgresql' or database_type == 'supabase' -%}
 postgres-data/
@@ -83,7 +82,6 @@ postgres-data/
 {% if database_type == 'supabase' and use_supabase_local -%}
 supabase/.branches/
 supabase/.temp/
-{% endif %}
 {% endif %}
 
 # Logs
