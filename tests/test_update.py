@@ -20,6 +20,25 @@ from tests.conftest import (
 )
 
 
+def _ensure_clean_git(project_dir: Path) -> None:
+    """Ensure project has git initialized and is in a clean state."""
+    if not (project_dir / ".git").exists():
+        git_init_and_commit(project_dir, "Initial commit")
+    else:
+        # Reset any dirty state from previous tests
+        git_reset(project_dir, exclude_patterns=[".venv"])
+        # Commit any untracked changes (like restored files from reset)
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=project_dir,
+            capture_output=True,
+            text=True,
+        )
+        if result.stdout.strip():
+            git_add_all(project_dir)
+            git_commit(project_dir, "Reset to clean state")
+
+
 class TestCopierUpdate:
     """Test copier update functionality."""
 
@@ -31,9 +50,7 @@ class TestCopierUpdate:
         """Test that copier update runs without errors on unchanged template."""
         project_dir = test_project_with_deps
 
-        # Ensure git is initialized
-        if not (project_dir / ".git").exists():
-            git_init_and_commit(project_dir, "Initial commit")
+        _ensure_clean_git(project_dir)
 
         # Run copier update - should succeed without errors
         copier.run_update(
@@ -56,13 +73,14 @@ class TestCopierUpdate:
         project_dir = test_project_with_deps
         package_name = TEST_PROJECT_CONFIG["package_name"]
 
-        # Ensure git is initialized
-        if not (project_dir / ".git").exists():
-            git_init_and_commit(project_dir, "Initial commit")
+        _ensure_clean_git(project_dir)
 
-        # Add a user file (not from template)
+        # Add a user file (not from template) with unique content
         user_file = project_dir / "src" / package_name / "custom_module.py"
-        user_file.write_text('"""Custom user module."""\n\nUSER_CONSTANT = 42\n')
+        import time
+
+        unique_value = int(time.time())
+        user_file.write_text(f'"""Custom user module."""\n\nUSER_CONSTANT = {unique_value}\n')
 
         git_add_all(project_dir)
         git_commit(project_dir, "Add custom module")
@@ -78,10 +96,12 @@ class TestCopierUpdate:
         # Verify user file is preserved
         assert user_file.exists(), "User file should be preserved after update"
         content = user_file.read_text()
-        assert "USER_CONSTANT = 42" in content
+        assert f"USER_CONSTANT = {unique_value}" in content
 
-        # Cleanup for next test
-        git_reset(project_dir, exclude_patterns=[".venv"])
+        # Cleanup: remove user file and commit
+        user_file.unlink()
+        git_add_all(project_dir)
+        git_commit(project_dir, "Remove custom module")
 
     @pytest.mark.slow
     def test_answers_file_valid(
