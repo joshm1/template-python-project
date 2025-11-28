@@ -5,6 +5,28 @@
 default:
     @just --list
 
+# =============================================================================
+# Setup & Dependencies
+# =============================================================================
+
+# Install dependencies (run this first)
+install:
+    uv sync
+
+# Update dependencies to latest versions
+update:
+    UV_FROZEN=0 uv sync --upgrade
+
+# Full setup: install deps + verify everything works
+setup: install
+    @echo "Verifying template..."
+    @just validate
+    @echo "Setup complete! Run 'just test-template-fast' to run tests."
+
+# =============================================================================
+# Project Generation
+# =============================================================================
+
 # Generate a new project interactively
 generate destination:
     uvx copier copy . "{{destination}}"
@@ -87,10 +109,6 @@ test-template-parallel:
 # Run tests with coverage report
 test-template-coverage:
     uv run pytest tests/ --cov=template --cov-report=term-missing --cov-report=html
-
-# Install test dependencies
-install-test-deps:
-    uv sync
 
 # Type check the test files
 typecheck-tests:
