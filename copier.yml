@@ -58,7 +58,7 @@ project_type:
     api: "API Service (FastAPI REST API)"
     library: "Library (distributable package)"
     monorepo: "Monorepo (multiple Python packages via UV workspaces)"
-  default: "api"
+  default: "monorepo"
 
 # Python Configuration
 python_version:
