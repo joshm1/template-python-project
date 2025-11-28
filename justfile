@@ -130,3 +130,51 @@ clean-test:
     rm -rf .ruff_cache
     find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
     find . -type f -name "*.pyc" -delete
+
+# =============================================================================
+# Pre-generated Test Project
+# =============================================================================
+
+# Regenerate the test project (test-generated-api-sqlite)
+# This project is committed to source for manual testing and CI quality checks
+regenerate-test-project:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    PROJECT_DIR="test-generated-api-sqlite"
+
+    # Backup .venv if it exists
+    if [ -d "$PROJECT_DIR/.venv" ]; then
+        echo "Backing up .venv..."
+        mv "$PROJECT_DIR/.venv" "/tmp/test-project-venv-backup"
+    fi
+
+    # Remove old project
+    rm -rf "$PROJECT_DIR"
+
+    # Generate fresh project (minimal config, let copier derive the rest)
+    echo "Generating test project..."
+    uv run copier copy --trust --force --defaults --vcs-ref HEAD \
+        -d "project_name=Test Generated API SQLite" \
+        -d "project_type=api" \
+        -d "database_type=sqlite" \
+        -d "git_init=false" \
+        . "$PROJECT_DIR"
+
+    # Restore .venv if we backed it up
+    if [ -d "/tmp/test-project-venv-backup" ]; then
+        echo "Restoring .venv..."
+        mv "/tmp/test-project-venv-backup" "$PROJECT_DIR/.venv"
+    fi
+
+    echo "Test project regenerated at $PROJECT_DIR"
+    echo ""
+    echo "To verify, run: just test-quality"
+
+# Install deps in test project and run quality checks
+test-project-quality:
+    cd test-generated-api-sqlite && uv sync && uv run pyright && uv run ruff check . && uv run ruff format --check .
+
+# Run copier update on test project (tests update functionality)
+test-project-update:
+    cd test-generated-api-sqlite && uv run copier update --trust --defaults

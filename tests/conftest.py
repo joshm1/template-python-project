@@ -174,19 +174,11 @@ def run_in_project(
 TEST_PROJECT_DIR = TEMPLATE_ROOT / "test-generated-api-sqlite"
 
 # Default test project configuration (API + SQLite exercises most code paths)
+# Minimal config - let copier derive the rest from defaults
 TEST_PROJECT_CONFIG = {
     "project_name": "Test Generated API SQLite",
-    "project_slug": "test-generated-api-sqlite",
-    "package_name": "test_generated_api_sqlite",
-    "description": "Pre-generated test project for quality checks",
-    "license": "mit",
     "project_type": "api",
-    "python_version": "3.13",
     "database_type": "sqlite",
-    "_use_alembic_input": True,
-    "ruff_strictness": "recommended",
-    "dependency_pinning": "flexible",
-    "documentation_tier": "standard",
     "git_init": False,
 }
 

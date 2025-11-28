@@ -71,7 +71,8 @@ class TestCopierUpdate:
     ) -> None:
         """Test that user-added files (not from template) are preserved."""
         project_dir = test_project_with_deps
-        package_name = TEST_PROJECT_CONFIG["package_name"]
+        # Derive package_name from project_name (same as copier does)
+        package_name = TEST_PROJECT_CONFIG["project_name"].lower().replace(" ", "_").replace("-", "_")
 
         _ensure_clean_git(project_dir)
 
@@ -117,7 +118,9 @@ class TestCopierUpdate:
 
         assert answers is not None
         assert answers.get("project_name") == TEST_PROJECT_CONFIG["project_name"]
-        assert answers.get("project_slug") == TEST_PROJECT_CONFIG["project_slug"]
+        # project_slug is derived from project_name
+        expected_slug = TEST_PROJECT_CONFIG["project_name"].lower().replace(" ", "-").replace("_", "-")
+        assert answers.get("project_slug") == expected_slug
         # Copier metadata should be present
         assert "_commit" in answers, "Should have _commit for update tracking"
         assert "_src_path" in answers, "Should have _src_path for template location"

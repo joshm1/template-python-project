@@ -19,7 +19,6 @@ _min_copier_version: "9.0.0"
 project_name:
   type: str
   help: "Project name (human-readable, with spaces/capitals)"
-  default: "My Project"
 
 project_slug:
   type: str
