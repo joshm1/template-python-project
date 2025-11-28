@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+{% if database_type in ['postgresql', 'supabase'] -%}
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp"
+    }{% if project_type in ['api', 'fullstack'] %},{% endif %}
+{% endif -%}
+{% if project_type in ['api', 'fullstack'] -%}
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {}
+    }
+{% endif -%}
+  }
+}

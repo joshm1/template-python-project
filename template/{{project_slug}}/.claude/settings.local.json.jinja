@@ -1,0 +1,110 @@
+{
+  "permissions": {
+    "allow": [
+      // ============================================
+      // Package Management
+      // ============================================
+      "Bash(uv add:*)",
+      "Bash(uv sync:*)",
+      "Bash(uvx:*)",
+
+      // ============================================
+      // Git Operations (Write)
+      // NOTE: Do NOT add git checkout, git stash, git merge, git rebase
+      // These commands can overwrite local changes
+      // ============================================
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+
+      // ============================================
+      // Development Tools
+      // ============================================
+{% if include_justfile -%}
+      "Bash(just:*)",
+{% endif -%}
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker ps:*)",
+
+      // ============================================
+      // Testing & Type Checking
+      // ============================================
+      "Bash(uv run pytest:*)",
+      "Bash(uv run pyright:*)",
+{% if project_type in ['api', 'fullstack'] -%}
+
+      // ============================================
+      // Browser Automation
+      // ============================================
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_console_messages",
+{% endif -%}
+
+      // ============================================
+      // File System Operations
+      // ============================================
+      "Bash(tree:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Read(/Users/USERNAME/.claude/**)",
+
+      // ============================================
+      // MCP Servers - GitHub
+      // ============================================
+      "mcp__github__get_me",
+      "mcp__github__get_pull_request",
+      "mcp__github__create_pull_request",
+      "mcp__github__list_pull_requests",
+      "mcp__github__get_issue",
+      "mcp__github__create_issue",
+      "mcp__github__add_issue_comment",
+{% if database_type in ['postgresql', 'supabase'] -%}
+
+      // ============================================
+      // MCP Servers - Supabase
+      // ============================================
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__get_project",
+      "mcp__supabase__search_docs",
+{% endif -%}
+
+      // ============================================
+      // Web Research
+      // ============================================
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:pypi.org)"
+    ],
+    "deny": [
+      // Prevent accidental heavy operations
+      "Read(node_modules)",
+      "Read(node_modules/**)",
+      "Read(.venv)",
+      "Read(.venv/**)"
+    ]
+  },
+
+  // ================================================
+  // MCP Server Configuration
+  // ================================================
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [
+{% if database_type in ['postgresql', 'supabase'] -%}
+    "supabase"{% if project_type in ['api', 'fullstack'] %},{% endif %}
+{% endif -%}
+{% if project_type in ['api', 'fullstack'] -%}
+    "playwright"
+{% endif -%}
+  ],
+  "disabledMcpjsonServers": []
+}

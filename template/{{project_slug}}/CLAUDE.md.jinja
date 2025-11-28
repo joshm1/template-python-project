@@ -1,0 +1,291 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working with code in this repository.
+
+## Project Overview
+
+{{ project_description }}
+
+**Tech Stack:**
+- Python {{ python_version }}
+{% if project_type == 'cli' -%}
+- Click for CLI
+{% if use_rich -%}
+- Rich for terminal output
+{% endif -%}
+{% elif project_type == 'api' -%}
+- FastAPI for REST API
+{% if database_type != 'none' -%}
+- {{ database_type|title }} database
+- SQLAlchemy 2.0 (async)
+{% endif -%}
+{% elif project_type == 'library' -%}
+- Python library/package
+{% elif project_type == 'monorepo' -%}
+- Monorepo with multiple packages
+- UV workspace for dependency management
+{% endif -%}
+
+## Essential Commands
+
+**Development:**
+```bash
+{% if include_justfile -%}
+just install          # Install dependencies
+{% if project_type == 'api' -%}
+just dev              # Start FastAPI server with hot reload
+{% elif project_type == 'cli' -%}
+just dev              # Run CLI in development mode
+{% endif -%}
+{% else -%}
+uv sync               # Install dependencies
+{% if project_type == 'api' -%}
+uv run uvicorn {{ package_name }}.main:app --reload
+{% elif project_type == 'cli' -%}
+uv run {{ project_slug }} --help
+{% endif -%}
+{% endif -%}
+```
+
+**Testing:**
+```bash
+{% if include_justfile -%}
+just test             # Run all tests
+just test-coverage    # Run tests with coverage
+{% if project_type == 'api' -%}
+just test-unit        # Unit tests only
+just test-integration # Integration tests only
+{% endif -%}
+{% else -%}
+uv run pytest
+uv run pytest --cov={{ package_name }}
+{% endif -%}
+```
+
+**Quality:**
+```bash
+{% if include_justfile -%}
+just check            # Run all checks (type + lint)
+just format           # Format code
+just lint             # Lint code
+{% else -%}
+uv run pyright        # Type checking
+uv run ruff check .   # Linting
+uv run ruff format .  # Formatting
+{% endif -%}
+```
+
+{% if database_type != 'none' and use_alembic -%}
+**Database:**
+```bash
+{% if include_justfile -%}
+just migrate          # Run migrations
+just migrate-new "description"  # Create new migration
+{% if project_type == 'api' -%}
+just db-reset         # Reset database (destructive!)
+{% endif -%}
+{% else -%}
+uv run alembic upgrade head
+uv run alembic revision --autogenerate -m "description"
+{% endif -%}
+```
+{% endif -%}
+
+## Critical Rules (Always Apply)
+
+### Type Safety: No Exceptions
+
+- **0 errors required** - Run `uv run pyright` before committing
+- **NEVER use `# type: ignore`** - Fix the type error properly
+- **NEVER use `Any` type** - Use proper types or `Unknown` for dynamic data
+- **Explicit return types on functions** - Required by strict mode
+- **Union types**: `str | None` (not `Optional[str]`)
+- **Built-ins**: `dict`, `list` (not `Dict`, `List`)
+
+### Code Quality
+
+- **Format before commit** - Run `just format` or `uv run ruff format .`
+- **All tests must pass** - No committing with failing tests
+- **Use assert, not pytest.fail()** - Better error messages
+- **Verify code works** - Actually run tests and check output
+
+### Git Workflow
+
+- **NEVER use `--no-verify`** - Pre-commit hooks exist for a reason
+- **Stage specific files** - Never `git add .`
+- **Commit message format**: Present tense, imperative mood
+- Commit after completing features, not individual file edits
+
+## Architecture
+
+{% if project_type == 'cli' -%}
+**CLI Structure:**
+- Entry point: `src/{{ package_name }}/cli.py`
+- Click-based command structure
+{% if use_rich -%}
+- Rich output for better UX
+{% endif -%}
+{% elif project_type == 'api' -%}
+**API Structure:**
+- FastAPI app: `src/{{ package_name }}/main.py`
+- Routes: `src/{{ package_name }}/api/routes/`
+- Schemas: `src/{{ package_name }}/schemas/` (Pydantic models for validation)
+{% if database_type != 'none' -%}
+- Models: `src/{{ package_name }}/models/` (SQLAlchemy ORM models)
+- Repositories: `src/{{ package_name }}/repositories/` (data access layer)
+- Database config: `src/{{ package_name }}/core/database.py`
+{% endif -%}
+
+**Async-first:** All I/O operations use async/await
+
+{% if database_type != 'none' -%}
+**Repository Pattern:**
+- All database access through repository classes
+- Repositories inject AsyncSession
+- Methods: `get_by_*` → `T | None`, `find_*` → `list[T]`
+
+**SQLAlchemy 2.0 Async:**
+```python
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+async def get_by_id(self, session: AsyncSession, id: int) -> Model | None:
+    stmt = select(Model).where(Model.id == id)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+```
+{% endif -%}
+{% elif project_type == 'library' -%}
+**Library Structure:**
+- Main module: `src/{{ package_name }}/__init__.py`
+- Public API exported in `__init__.py`
+- Internal modules in subdirectories
+{% elif project_type == 'monorepo' -%}
+**Monorepo Structure:**
+- Workspace root with shared dev dependencies
+- Multiple packages in `packages/`
+- UV workspace for dependency management
+- Shared configuration in root `pyproject.toml`
+{% endif -%}
+
+## Testing Approach
+
+{% if database_type != 'none' -%}
+**Database Testing:**
+- Async fixtures for database session
+- Test database created per test function
+- Use `pytest-asyncio` for async tests
+- Clean up after each test
+
+**Fixture pattern:**
+```python
+@pytest.fixture
+async def db_session() -> AsyncGenerator[AsyncSession]:
+    async with async_session_maker() as session:
+        yield session
+        await session.rollback()
+```
+
+{% endif -%}
+**Test Organization:**
+{% if project_type == 'api' -%}
+- `tests/unit/` - Fast, isolated unit tests
+- `tests/integration/` - Tests requiring database/external services
+- Mark integration tests: `@pytest.mark.integration`
+{% else -%}
+- `tests/` - All tests
+- AAA Pattern: Arrange-Act-Assert
+{% endif -%}
+
+**AAA Pattern:**
+```python
+{% if database_type != 'none' -%}
+async def test_create_item(db_session: AsyncSession):
+    # Arrange
+    repo = ItemRepository()
+    item_data = {"name": "Test"}
+
+    # Act
+    result = await repo.create(db_session, item_data)
+
+    # Assert
+    assert result.name == "Test"
+    assert result.id is not None
+{% else -%}
+def test_create_item():
+    # Arrange
+    item_data = {"name": "Test"}
+
+    # Act
+    result = create_item(item_data)
+
+    # Assert
+    assert result.name == "Test"
+{% endif -%}
+```
+
+## Development Workflow
+
+1. **Make changes** to code
+2. **Type check first**: `uv run pyright file.py`
+3. **Run relevant tests**: `uv run pytest tests/test_file.py`
+4. **Format code**: `uv run ruff format .`
+5. **Run all checks**: `just check` or `uv run pyright && uv run ruff check .`
+6. **Commit**: Only after all checks pass
+
+{% if database_type != 'none' and use_alembic -%}
+## Database Migration Workflow
+
+1. **Make model changes** in `src/{{ package_name }}/models/`
+2. **Generate migration**: `{% if include_justfile %}just migrate-new "description"{% else %}uv run alembic revision --autogenerate -m "description"{% endif %}`
+3. **Review migration** in `alembic/versions/`
+4. **Apply migration**: `{% if include_justfile %}just migrate{% else %}uv run alembic upgrade head{% endif %}`
+5. **Test migration**: Verify database state and run tests
+{% endif -%}
+
+## Feature Completion Checklist
+
+Before marking a feature as complete:
+
+- [ ] Code follows architecture patterns (Repository, async-first, etc.)
+- [ ] All functions have explicit return type annotations
+- [ ] Type checking passes: `uv run pyright` returns 0 errors
+- [ ] Tests written and passing (unit + integration if applicable)
+- [ ] Code formatted: `uv run ruff format .`
+- [ ] Linting passes: `uv run ruff check .`
+{% if database_type != 'none' and use_alembic -%}
+- [ ] Database migrations created and applied (if schema changed)
+{% endif -%}
+- [ ] Documentation updated (docstrings, comments, README if needed)
+- [ ] Changes staged individually: `git add <specific-files>`
+- [ ] Pre-commit hooks pass (if enabled)
+- [ ] Commit message is clear and descriptive
+
+## Memory Bank
+
+**Code Quality:**
+- Use `git add <file>` (never `git add .`)
+- Place temp files in local `tmp/` (never `/tmp/`)
+- Run type checking on individual files during development
+
+**Type Safety:**
+- Use modern Python 3.10+ syntax (`str | None`, `dict[str, int]`)
+- No `Any` types, no `type: ignore` comments
+- Explicit return types on all functions
+
+**Testing:**
+- AAA pattern required (Arrange-Act-Assert)
+- Iterative development: Write one test → run it → fix → next test
+- Use pytest fixtures for setup/teardown
+
+{% if database_type != 'none' -%}
+**Database:**
+- Always use async/await for database operations
+- Repository pattern for all data access
+- Use SQLAlchemy 2.0 select() statements
+{% endif -%}
+
+**Git Workflow:**
+- Stage specific files before commit
+- Never bypass pre-commit hooks with `--no-verify`
+- Commit after feature completion, not individual edits
