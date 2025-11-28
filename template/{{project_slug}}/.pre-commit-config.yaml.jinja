@@ -1,0 +1,93 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom tags in YAML
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+      # Run the formatter
+      - id: ruff-format
+
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.390
+    hooks:
+      - id: pyright
+        {% if project_type == 'api' or database_type != 'none' -%}
+        additional_dependencies:
+          {% if project_type == 'api' -%}
+          - fastapi>=0.119.0
+          - uvicorn>=0.38.0
+          - pydantic>=2.0.0
+          - pydantic-settings>=2.0.0
+          {% endif -%}
+          {% if database_type == 'postgresql' -%}
+          - sqlalchemy>=2.0.0
+          - asyncpg>=0.30.0
+          {% if use_alembic -%}
+          - alembic>=1.17.0
+          {% endif -%}
+          {% elif database_type == 'supabase' -%}
+          - supabase>=2.0.0
+          - httpx>=0.28.0
+          {% elif database_type == 'sqlite' -%}
+          - sqlalchemy>=2.0.0
+          - aiosqlite>=0.20.0
+          {% endif -%}
+        {% endif -%}
+
+{% if project_type == 'api' and use_alembic -%}
+  # SQL formatting for migration files
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 3.2.5
+    hooks:
+      - id: sqlfluff-lint
+        args: [--dialect, postgres]
+        files: ^alembic/versions/.*\.py$
+      - id: sqlfluff-fix
+        args: [--dialect, postgres]
+        files: ^alembic/versions/.*\.py$
+{% endif %}
+
+{% if use_docker -%}
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+{% endif %}
+
+  # Security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^tests/
+
+# Configuration
+ci:
+  autoupdate_schedule: monthly
+  skip: []
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_commit_msg: |
+    [pre-commit.ci] pre-commit autoupdate
