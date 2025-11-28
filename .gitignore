@@ -39,14 +39,7 @@ htmlcov/
 .nox/
 
 # Generated test projects (for quality tests)
-# Ignore all test-generated-* EXCEPT the main one we commit
 test-generated-*/
-!test-generated-api-sqlite/
-
-# But ignore .venv inside the committed test project
-test-generated-api-sqlite/.venv/
-test-generated-api-sqlite/.ruff_cache/
-test-generated-api-sqlite/.pytest_cache/
 
 # OS files
 .DS_Store
