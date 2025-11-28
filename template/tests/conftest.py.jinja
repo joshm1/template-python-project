@@ -3,7 +3,6 @@
 from typing import Any
 {% if database_type != 'none' -%}
 from collections.abc import AsyncGenerator
-
 {% endif -%}
 import pytest
 {% if database_type != 'none' -%}
@@ -15,11 +14,10 @@ from httpx import AsyncClient
 from {{ package_name }}.core.database import Base
 from {{ package_name }}.main import app
 {% elif database_type != 'none' -%}
-
 from {{ package_name }}.database import Base
-{% endif -%}
+{%- endif %}
+{%- if database_type != 'none' %}
 
-{% if database_type != 'none' -%}
 # Configure asyncio for async tests
 pytest_plugins = ("pytest_asyncio",)
 
@@ -31,8 +29,7 @@ TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/{{ pr
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:54322/postgres"
 {% elif database_type == 'sqlite' -%}
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-{% endif -%}
-
+{% endif %}
 # Create test engine
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
@@ -74,9 +71,10 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
         await session.rollback()
 
+{%- endif %}
+{%- if project_type == 'api' %}
 
-{% endif -%}
-{% if project_type == 'api' -%}
+
 @pytest.fixture
 async def client(
     db_session: AsyncSession,
@@ -98,9 +96,9 @@ async def client(
         yield ac
 
     app.dependency_overrides.clear()
+{%- endif %}
 
 
-{% endif -%}
 @pytest.fixture(autouse=True)
 def reset_environment(monkeypatch: Any) -> None:
     """Reset environment variables for each test.
@@ -114,8 +112,7 @@ def reset_environment(monkeypatch: Any) -> None:
     # Ensure test environment uses test Supabase
     monkeypatch.setenv("SUPABASE_URL", "http://localhost:54321")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "test-key")
-{% endif -%}
-
+{% endif %}
 
 # Test markers configuration
 def pytest_configure(config: Any) -> None:
@@ -132,18 +129,18 @@ def pytest_configure(config: Any) -> None:
         "markers",
         "slow: Tests that take longer than 1 second to run",
     )
-{% if database_type == 'supabase' -%}
+{% if database_type == 'supabase' %}
     config.addinivalue_line(
         "markers",
         "supabase: Tests that require Supabase services",
     )
-{% endif -%}
-{% if project_type == 'api' -%}
+{% endif %}
+{% if project_type == 'api' %}
     config.addinivalue_line(
         "markers",
         "e2e: End-to-end tests that test full user workflows",
     )
-{% endif -%}
+{% endif %}
 
 
 # Skip tests based on environment conditions
@@ -154,8 +151,7 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
     specific services or credentials.
     """
     import os
-
-{% if database_type == 'supabase' -%}
+{% if database_type == 'supabase' %}
     # Skip Supabase tests if local stack is not running
     skip_supabase = pytest.mark.skip(reason="Supabase not available")
     supabase_available = os.getenv("SUPABASE_URL") or False
@@ -163,8 +159,7 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
     for item in items:
         if "supabase" in item.keywords and not supabase_available:
             item.add_marker(skip_supabase)
-
-{% endif -%}
+{% endif %}
     # Skip paid API tests in CI unless explicitly enabled
     skip_paid = pytest.mark.skip(reason="Paid API tests disabled")
     run_paid_tests = os.getenv("RUN_PAID_TESTS", "false").lower() == "true"

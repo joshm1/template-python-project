@@ -2,12 +2,11 @@
 name = "{{ package_name }}_api"
 version = "0.1.0"
 description = "API service for {{ project_name }}"
-authors = [
-    {name = "{{ author_name }}", email = "{{ author_email }}"}
-]
 readme = "README.md"
 requires-python = ">={{ python_version }}"
+{% if license == 'mit' -%}
 license = {text = "MIT"}
+{% endif -%}
 dependencies = [
     "{{ package_name }}_common",  # Workspace dependency
     "fastapi>=0.119.0",

@@ -1,0 +1,19 @@
+"""Tests for {{ package_name }}_api package."""
+
+import pytest
+from fastapi.testclient import TestClient
+
+from {{ package_name }}_api import __version__
+
+
+def test_version() -> None:
+    """Test that version is defined."""
+    assert __version__ == "0.1.0"
+
+
+@pytest.mark.unit
+def test_health_check(client: TestClient) -> None:
+    """Test the health check endpoint."""
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}

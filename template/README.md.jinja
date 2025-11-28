@@ -414,12 +414,8 @@ See `.env.example` for available environment variables.
 
 ## License
 
-{% if project_type == 'library' -%}
+{% if license == 'mit' -%}
 This project is licensed under the MIT License - see the LICENSE file for details.
 {% else -%}
-[Specify license here]
-{% endif %}
-
-## Author
-
-{{ author_name }}{% if author_email %} <{{ author_email }}>{% endif %}
+Proprietary - All rights reserved.
+{% endif -%}

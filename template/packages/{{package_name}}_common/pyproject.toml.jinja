@@ -2,12 +2,11 @@
 name = "{{ package_name }}_common"
 version = "0.1.0"
 description = "Common utilities and shared code for {{ project_name }}"
-authors = [
-    {name = "{{ author_name }}", email = "{{ author_email }}"}
-]
 readme = "README.md"
 requires-python = ">={{ python_version }}"
+{% if license == 'mit' -%}
 license = {text = "MIT"}
+{% endif -%}
 dependencies = [
     "pydantic>=2.0.0",
     "loguru>=0.7.0",

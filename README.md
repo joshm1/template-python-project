@@ -15,9 +15,8 @@ A production-ready Copier template for Python projects, based on analysis of 40+
 ## Quick Start
 
 ```bash
-# Install Copier and required extensions
+# Install Copier
 uv tool install copier
-pip install copier-templates-extensions  # Required for git config defaults
 
 # Generate a new project
 copier copy gh:joshm1/template-python-project /path/to/new/project
@@ -25,8 +24,6 @@ copier copy gh:joshm1/template-python-project /path/to/new/project
 # Or use the local template during development
 copier copy /path/to/template-python-project /path/to/new/project
 ```
-
-> **Note:** The `copier-templates-extensions` package is required for author name/email to default to your `git config user.name` and `git config user.email` values.
 
 ## Template Structure
 
@@ -95,7 +92,6 @@ Multi-package workspaces with shared dependencies.
 
 **Basic Information:**
 - Project name, slug, and package name
-- Author name and email (defaults to git config)
 - Project description
 
 **Project Type:**
@@ -151,4 +147,4 @@ After creating the base structure, the following template files need to be imple
 
 ## License
 
-MIT
+Proprietary - All rights reserved.

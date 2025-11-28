@@ -15,7 +15,7 @@ install:
 
 # Update dependencies to latest versions
 update:
-    UV_FROZEN=0 uv sync --upgrade
+    uv lock --upgrade && uv sync
 
 # Full setup: install deps + verify everything works
 setup: install
@@ -29,27 +29,27 @@ setup: install
 
 # Generate a new project interactively
 generate destination:
-    uvx copier copy . "{{destination}}"
+    uv run copier copy --trust . "{{destination}}"
 
 # Generate a new project with dirty changes (useful during template development)
 generate-dev destination:
-    uvx copier copy --vcs-ref HEAD . "{{destination}}"
+    uv run copier copy --trust --vcs-ref HEAD . "{{destination}}"
 
 # Generate a project with all defaults (non-interactive, for testing)
 generate-defaults destination name="test-project":
-    uvx copier copy --force --defaults -d "project_name={{name}}" . "{{destination}}"
+    uv run copier copy --trust --force --defaults -d "project_name={{name}}" . "{{destination}}"
 
 # Generate a project with specific options (non-interactive)
 generate-with destination name="my-project" type="cli" +DATA="":
-    uvx copier copy --force -d "project_name={{name}}" -d "project_type={{type}}" {{DATA}} . "{{destination}}"
+    uv run copier copy --trust --force -d "project_name={{name}}" -d "project_type={{type}}" {{DATA}} . "{{destination}}"
 
 # Update an existing project generated from this template
-update destination:
-    uvx copier update "{{destination}}"
+update-project destination:
+    uv run copier update --trust "{{destination}}"
 
-# Update with dirty changes (useful during template development)
-update-dev destination:
-    uvx copier update --vcs-ref HEAD "{{destination}}"
+# Update project with dirty changes (useful during template development)
+update-project-dev destination:
+    uv run copier update --trust --vcs-ref HEAD "{{destination}}"
 
 # Validate the template by generating a test project
 validate:
@@ -58,7 +58,7 @@ validate:
     TEMP_DIR=$(mktemp -d)
     trap "rm -rf $TEMP_DIR" EXIT
     echo "Generating test project in $TEMP_DIR..."
-    uvx copier copy --force --defaults -d "project_name=Template Test" --vcs-ref HEAD . "$TEMP_DIR"
+    uv run copier copy --trust --force --defaults -d "project_name=Template Test" --vcs-ref HEAD . "$TEMP_DIR"
     echo "Template generated successfully!"
     ls -la "$TEMP_DIR"
 

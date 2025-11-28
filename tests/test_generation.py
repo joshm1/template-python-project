@@ -140,15 +140,17 @@ def test_no_unrendered_jinja_templates(
         " #}",
     ]
 
+    # Files that legitimately use Jinja-like syntax
+    skip_files = {"CLAUDE.md", "justfile"}  # justfile uses its own {% if os() %} syntax
+
     for file_path in project_dir.rglob("*"):
         if file_path.is_file() and file_path.suffix not in {".pyc", ".pyo"}:
+            if file_path.name in skip_files:
+                continue
             try:
                 content = file_path.read_text(encoding="utf-8")
                 for pattern in jinja_patterns:
                     if pattern in content:
-                        # Allow Jinja2 in CLAUDE.md examples
-                        if file_path.name == "CLAUDE.md" and "example" in content.lower():
-                            continue
                         pytest.fail(
                             f"Unrendered Jinja2 found in {file_path.relative_to(project_dir)}: {pattern}"
                         )

@@ -1,0 +1,9 @@
+"""Pytest configuration for {{ package_name }}_common tests."""
+
+import pytest
+
+
+@pytest.fixture
+def sample_fixture() -> str:
+    """Sample fixture for common package tests."""
+    return "test_value"

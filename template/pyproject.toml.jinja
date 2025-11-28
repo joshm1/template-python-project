@@ -2,12 +2,9 @@
 name = "{{ project_slug }}"
 version = "0.1.0"
 description = "{{ description }}"
-authors = [
-    {name = "{{ author_name }}", email = "{{ author_email }}"}
-]
 readme = "README.md"
 requires-python = ">={{ python_version }}"
-{% if project_type != 'monorepo' -%}
+{% if license == 'mit' -%}
 license = {text = "MIT"}
 {% endif -%}
 dependencies = [

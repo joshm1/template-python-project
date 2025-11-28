@@ -21,13 +21,11 @@ The main template configuration file includes:
 
 ### Template Variables (20 total)
 
-#### Basic Project Info (5)
+#### Basic Project Info (4)
 - `project_name`: Human-readable project name
 - `project_slug`: URL-friendly project identifier (auto-generated)
 - `package_name`: Python package name (auto-generated)
 - `description`: Project description
-- `author_name`: Author name
-- `author_email`: Author email
 
 #### Project Type (1)
 - `project_type`: cli/api/library/monorepo
