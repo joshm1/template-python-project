@@ -1,0 +1,41 @@
+# {{ package_name }}_api
+
+API service for {{ project_name }}.
+
+## Overview
+
+This package contains the FastAPI application with:
+- REST API endpoints
+- Request/response schemas
+- API middleware and dependencies
+{% if database_type != 'none' -%}
+- Database integration
+{% endif %}
+
+## Installation
+
+This package is part of the {{ project_name }} UV workspace. Install from the workspace root:
+
+```bash
+uv sync
+```
+
+## Development
+
+Start the development server:
+
+```bash
+uv run uvicorn {{ package_name }}_api.main:app --reload --port 8000
+```
+
+Run tests for this package:
+
+```bash
+uv run pytest packages/{{ package_name }}_api/tests/
+```
+
+## API Documentation
+
+When running locally:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc

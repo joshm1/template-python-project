@@ -1,0 +1,21 @@
+[project]
+name = "{{ package_name }}_common"
+version = "0.1.0"
+description = "Common utilities and shared code for {{ project_name }}"
+authors = [
+    {name = "{{ author_name }}", email = "{{ author_email }}"}
+]
+readme = "README.md"
+requires-python = ">={{ python_version }}"
+license = {text = "MIT"}
+dependencies = [
+    "pydantic>=2.0.0",
+    "loguru>=0.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["src/{{ package_name }}_common"]

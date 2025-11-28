@@ -1,0 +1,32 @@
+# {{ package_name }}_common
+
+Common utilities and shared code for {{ project_name }}.
+
+## Overview
+
+This package contains:
+- Shared Pydantic models and schemas
+- Common utilities and helpers
+- Base classes and types used across packages
+
+## Installation
+
+This package is part of the {{ project_name }} UV workspace. Install from the workspace root:
+
+```bash
+uv sync
+```
+
+## Usage
+
+```python
+from {{ package_name }}_common import ...
+```
+
+## Development
+
+Run tests for this package:
+
+```bash
+uv run pytest packages/{{ package_name }}_common/tests/
+```

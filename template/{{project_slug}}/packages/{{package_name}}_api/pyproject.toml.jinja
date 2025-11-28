@@ -1,0 +1,37 @@
+[project]
+name = "{{ package_name }}_api"
+version = "0.1.0"
+description = "API service for {{ project_name }}"
+authors = [
+    {name = "{{ author_name }}", email = "{{ author_email }}"}
+]
+readme = "README.md"
+requires-python = ">={{ python_version }}"
+license = {text = "MIT"}
+dependencies = [
+    "{{ package_name }}_common",  # Workspace dependency
+    "fastapi>=0.119.0",
+    "uvicorn[standard]>=0.38.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    {% if database_type == 'postgresql' -%}
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.30.0",
+    {% if use_alembic -%}
+    "alembic>=1.17.0",
+    {% endif -%}
+    {% elif database_type == 'supabase' -%}
+    "supabase>=2.0.0",
+    "httpx>=0.28.0",
+    {% elif database_type == 'sqlite' -%}
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.20.0",
+    {% endif -%}
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["src/{{ package_name }}_api"]
