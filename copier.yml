@@ -1,6 +1,15 @@
 # Copier Template for Modern Python Projects
 # Based on analysis of 40+ real-world Python projects
 # https://github.com/copier-org/copier
+#
+# Always included (not configurable):
+# - Pyright strict type checking
+# - pytest testing infrastructure
+# - pre-commit hooks
+# - justfile task runner
+# - Claude Code integration (.claude/ with commands, agents, skills, MCP servers)
+# - rich terminal output
+# - Click for CLI
 
 _min_copier_version: "9.0.0"
 
@@ -112,16 +121,6 @@ dependency_pinning:
     strict: "Strict (== pinned versions)"
   default: "flexible"
 
-enable_type_checking:
-  type: bool
-  help: "Enable strict type checking with Pyright?"
-  default: true
-
-enable_testing:
-  type: bool
-  help: "Include pytest and testing infrastructure?"
-  default: true
-
 # Documentation Configuration
 documentation_tier:
   type: str
@@ -131,36 +130,6 @@ documentation_tier:
     standard: "Standard (+ code-style guides + agent docs)"
     comprehensive: "Comprehensive (+ architecture diagrams + TodoWrite templates)"
   default: "standard"
-
-# Claude Code Integration
-setup_claude_code:
-  type: bool
-  help: "Include Claude Code configuration (.claude/ directory)?"
-  default: true
-
-include_slash_commands:
-  type: bool
-  help: "Include slash commands (git-commit, prime, quality-check)?"
-  default: "{{ setup_claude_code }}"
-  when: "{{ setup_claude_code }}"
-
-include_custom_agents:
-  type: bool
-  help: "Include custom agents (test-runner, code-quality-check)?"
-  default: "{{ setup_claude_code }}"
-  when: "{{ setup_claude_code }}"
-
-include_skills:
-  type: bool
-  help: "Include skills (pyright-type-strictness, database-queries, writing-tests)?"
-  default: "{{ setup_claude_code }}"
-  when: "{{ setup_claude_code }}"
-
-include_mcp_servers:
-  type: bool
-  help: "Include MCP server configurations?"
-  default: "{{ setup_claude_code and database_type == 'supabase' }}"
-  when: "{{ setup_claude_code }}"
 
 # Git Configuration
 git_init:

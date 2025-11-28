@@ -1,0 +1,467 @@
+# {{ project_name }}
+
+{{ description }}
+
+{% if project_type == 'cli' -%}
+## Installation
+
+```bash
+# Install using UV (recommended)
+uv pip install {{ project_slug }}
+
+# Or using pip
+pip install {{ project_slug }}
+```
+
+## Usage
+
+```bash
+# Show help
+{{ project_slug }} --help
+
+# Run the CLI
+{{ project_slug }} [OPTIONS] COMMAND [ARGS]...
+```
+
+{% elif project_type == 'api' -%}
+## Quick Start
+
+```bash
+# Install dependencies
+just install
+
+{% if database_type == 'supabase' and use_supabase_local -%}
+# Start local Supabase stack
+just supabase-start
+
+{% elif database_type == 'postgresql' and use_docker -%}
+# Start database
+just db-start
+
+{% endif -%}
+{% if use_alembic -%}
+# Run database migrations
+just migrate
+
+{% endif -%}
+# Start development server
+just dev
+```
+
+The API will be available at http://localhost:8000
+
+### API Documentation
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+- OpenAPI JSON: http://localhost:8000/openapi.json
+
+{% elif project_type == 'library' -%}
+## Installation
+
+```bash
+# Install using UV (recommended)
+uv pip install {{ project_slug }}
+
+# Or using pip
+pip install {{ project_slug }}
+```
+
+## Usage
+
+```python
+from {{ package_name }} import ...
+
+# Your library code here
+```
+
+{% elif project_type == 'monorepo' -%}
+## Project Structure
+
+This is a monorepo containing multiple Python packages managed by UV workspaces.
+
+```
+{{ project_slug }}/
+├── packages/
+│   ├── package-1/
+│   ├── package-2/
+│   └── ...
+├── pyproject.toml
+└── justfile
+```
+
+## Quick Start
+
+```bash
+# Install all workspace dependencies
+just install
+
+# List all packages
+just list-packages
+
+{% if enable_testing -%}
+# Run all tests
+just test
+
+{% endif -%}
+# Format all code
+just format
+```
+
+{% endif -%}
+## Development
+
+### Prerequisites
+
+- Python {{ python_version }}+
+- [UV](https://github.com/astral-sh/uv) package manager
+
+### Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd {{ project_slug }}
+
+# Install dependencies
+just install
+```
+
+### Common Tasks
+
+```bash
+# List all available commands
+just
+
+{% if project_type == 'api' -%}
+# Start development server
+just dev
+
+{% elif project_type == 'cli' -%}
+# Run the CLI
+just run --help
+
+{% endif -%}
+{% if enable_testing -%}
+# Run tests
+just test
+
+# Run tests with coverage
+just test-coverage
+
+{% endif -%}
+{% if enable_type_checking -%}
+# Type checking
+just typecheck
+
+{% endif -%}
+# Format code
+just format
+
+# Run all quality checks
+just check
+
+# Clean cache files
+just clean
+```
+
+{% if database_type != 'none' -%}
+### Database
+
+{% if database_type == 'supabase' and use_supabase_local -%}
+This project uses [Supabase](https://supabase.com/) for the database.
+
+#### Local Development
+
+```bash
+# Start local Supabase stack
+just supabase-start
+
+# Stop Supabase
+just supabase-stop
+
+# Open Supabase Studio
+just db-studio
+
+# View logs
+just supabase-logs
+```
+
+Services:
+- Studio: http://localhost:58172
+- REST API: http://localhost:58167/rest/v1/
+- Auth API: http://localhost:58167/auth/v1/
+- Inbucket (Email): http://localhost:58170
+
+{% elif database_type == 'postgresql' -%}
+This project uses PostgreSQL for the database.
+
+```bash
+{% if use_docker -%}
+# Start database
+just db-start
+
+# Stop database
+just db-stop
+
+# Connect to database
+just db-psql
+
+{% endif -%}
+{% if use_alembic -%}
+# Run migrations
+just migrate
+
+# Create new migration
+just migrate-new "description"
+
+# Rollback migration
+just migrate-down
+{% endif %}
+```
+
+{% elif database_type == 'sqlite' -%}
+This project uses SQLite for the database. The database file will be created automatically in the project directory.
+
+{% endif -%}
+{% endif -%}
+{% if use_docker -%}
+### Docker
+
+```bash
+# Build Docker image
+just docker-build
+
+# Start all services
+just docker-up
+
+# Stop all services
+just docker-down
+
+# View logs
+just docker-logs
+```
+
+{% endif -%}
+{% if enable_testing -%}
+## Testing
+
+```bash
+# Run all tests
+just test
+
+# Run specific test file
+just test-file tests/unit/test_example.py
+
+# Run tests matching expression
+just test-match "test_user"
+
+# Run with coverage
+just test-coverage
+
+# Run only unit tests
+just test-unit
+
+# Run only integration tests
+just test-integration
+```
+
+{% endif -%}
+{% if enable_type_checking -%}
+## Type Checking
+
+This project uses [Pyright](https://github.com/microsoft/pyright) for static type checking with strict mode enabled.
+
+```bash
+just typecheck
+```
+
+{% endif -%}
+## Code Quality
+
+The project uses the following tools for code quality:
+
+- **[Ruff](https://github.com/astral-sh/ruff)**: Fast Python linter and formatter{% if ruff_strictness == 'strict' %} (strict mode){% elif ruff_strictness == 'recommended' %} (recommended rules){% endif %}
+
+{% if enable_type_checking -%}
+- **[Pyright](https://github.com/microsoft/pyright)**: Static type checker (strict mode)
+{% endif -%}
+{% if enable_testing -%}
+- **[pytest](https://pytest.org/)**: Testing framework
+{% endif %}
+
+```bash
+# Run all quality checks
+just check
+```
+
+{% if setup_claude_code -%}
+## Claude Code Integration
+
+This project includes [Claude Code](https://claude.com/claude-code) configuration for AI-assisted development.
+
+### Available Commands
+
+{% if include_slash_commands -%}
+Slash commands (use in Claude Code chat):
+- `/prime` - Prime Claude with project context
+- `/git-commit` - Create a conventional commit
+{% if enable_testing -%}
+- `/run-all-tests` - Run all tests with coverage
+{% endif -%}
+- `/quality-check` - Run all quality checks
+
+{% endif -%}
+{% if include_custom_agents -%}
+Custom agents:
+{% if enable_testing -%}
+- `test-runner` - Intelligent test execution and debugging
+{% endif -%}
+{% if enable_type_checking -%}
+- `code-quality-check` - Fast type checking and linting
+{% endif %}
+
+{% endif -%}
+See `.claude/` directory for full configuration.
+
+{% endif -%}
+## Project Structure
+
+```
+{{ project_slug }}/
+{% if project_type == 'monorepo' -%}
+├── packages/           # Workspace packages
+│   └── .../
+{% else -%}
+├── src/
+│   └── {{ package_name }}/
+{% if project_type == 'api' -%}
+│       ├── api/       # API routes
+│       ├── core/      # Core configuration
+│       ├── models/    # Database models
+│       ├── repositories/  # Repository pattern
+│       ├── schemas/   # Pydantic schemas
+│       └── main.py    # Application entry point
+{% elif project_type == 'cli' -%}
+│       ├── cli/       # CLI commands
+│       ├── core/      # Core functionality
+│       └── main.py    # CLI entry point
+{% else -%}
+│       └── ...        # Library code
+{% endif -%}
+{% endif -%}
+{% if enable_testing -%}
+├── tests/
+│   ├── unit/          # Unit tests
+│   ├── integration/   # Integration tests
+│   ├── fixtures/      # Test fixtures
+│   └── conftest.py    # pytest configuration
+{% endif -%}
+{% if documentation_tier != 'minimal' -%}
+├── docs/
+{% if documentation_tier == 'standard' or documentation_tier == 'comprehensive' -%}
+│   ├── agent/         # AI agent documentation
+│   └── code-style/    # Code style guides
+{% endif -%}
+{% if documentation_tier == 'comprehensive' -%}
+│   ├── architecture/  # Architecture diagrams
+│   └── examples/      # Usage examples
+{% endif -%}
+{% endif -%}
+{% if use_alembic -%}
+├── alembic/           # Database migrations
+{% endif -%}
+{% if database_type == 'supabase' and use_supabase_local -%}
+├── supabase/          # Supabase configuration
+{% endif -%}
+{% if setup_claude_code -%}
+├── .claude/           # Claude Code configuration
+{% endif -%}
+{% if use_devcontainer -%}
+├── .devcontainer/     # VS Code devcontainer
+{% endif -%}
+├── pyproject.toml     # Project configuration
+{% if enable_type_checking -%}
+├── pyrightconfig.json # Type checking configuration
+{% endif -%}
+├── justfile           # Task runner
+└── README.md          # This file
+```
+
+{% if documentation_tier == 'standard' or documentation_tier == 'comprehensive' -%}
+## Documentation
+
+{% if setup_claude_code -%}
+- `CLAUDE.md` - AI agent guide with project patterns and best practices
+- `docs/agent/` - AI-specific documentation
+{% endif -%}
+- `docs/code-style/` - Code style guides and patterns
+{% if documentation_tier == 'comprehensive' -%}
+- `docs/architecture/` - Architecture diagrams and design decisions
+- `docs/examples/` - Usage examples and tutorials
+{% endif %}
+
+{% endif -%}
+## Environment Variables
+
+{% if database_type == 'supabase' -%}
+Create a `.env` file in the project root:
+
+```bash
+# Supabase Configuration
+SUPABASE_URL=your_project_url
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# For local development (when using just supabase-start)
+# SUPABASE_URL=http://localhost:58167
+# SUPABASE_ANON_KEY=<see supabase/.env>
+```
+
+{% elif database_type == 'postgresql' -%}
+Create a `.env` file in the project root:
+
+```bash
+# Database Configuration
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/{{ project_slug }}
+
+# For production
+# DATABASE_URL=postgresql://user:password@host:5432/database
+```
+
+{% elif database_type == 'sqlite' -%}
+Create a `.env` file in the project root:
+
+```bash
+# Database Configuration
+DATABASE_URL=sqlite:///./{{ project_slug }}.db
+```
+
+{% else -%}
+See `.env.example` for available environment variables.
+
+{% endif -%}
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run quality checks (`just check`)
+{% if enable_testing -%}
+5. Run tests (`just test`)
+{% endif -%}
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+## License
+
+{% if project_type == 'library' -%}
+This project is licensed under the MIT License - see the LICENSE file for details.
+{% else -%}
+[Specify license here]
+{% endif %}
+
+## Author
+
+{{ author_name }}{% if author_email %} <{{ author_email }}>{% endif %}

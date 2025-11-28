@@ -1,0 +1,316 @@
+# {{ project_name }} - Justfile
+# Task runner for development commands
+# https://just.systems/man/en/
+
+# Set shell for all recipes
+set shell := ["bash", "-uc"]
+
+# Load .env files automatically
+set dotenv-load := true
+
+# Variables
+UV_RUN := "uv run"
+
+# List all available commands
+default:
+    @just --list
+
+# Install all dependencies
+install:
+    uv sync{% if project_type == 'monorepo' %} --all-packages{% endif %}
+
+    {% if setup_claude_code and include_slash_commands -%}
+    @echo "✓ Dependencies installed"
+    @echo ""
+    @echo "Claude Code slash commands available:"
+    @echo "  /prime          - Prime Claude with project context"
+    @echo "  /git-commit     - Create a conventional commit"
+    {% if enable_testing -%}
+    @echo "  /run-all-tests  - Run all tests with coverage"
+    {% endif -%}
+    @echo "  /quality-check  - Run all quality checks"
+    {% endif %}
+
+# Update dependencies to latest versions
+update:
+    UV_FROZEN=0 uv sync --upgrade{% if project_type == 'monorepo' %} --all-packages{% endif %}
+
+    @echo "✓ Dependencies updated"
+
+{% if project_type == 'cli' -%}
+# Start development CLI (show help)
+dev:
+    {{UV_RUN}} {{ project_slug }} --help
+
+# Run CLI with arguments
+run *args:
+    {{UV_RUN}} {{ project_slug }} {{args}}
+
+{% elif project_type == 'api' -%}
+# Start development server
+dev:
+    {{UV_RUN}} uvicorn {{ package_name }}.main:app --reload --port 8000
+
+# Start server with custom host/port
+serve host="0.0.0.0" port="8000":
+    {{UV_RUN}} uvicorn {{ package_name }}.main:app --host {{host}} --port {{port}}
+
+{% elif project_type == 'library' -%}
+# Run library module
+dev:
+    {{UV_RUN}} python -m {{ package_name }}
+
+{% elif project_type == 'monorepo' -%}
+# List all workspace packages
+@list-packages:
+    uv tree --package-mode workspace
+
+{% endif -%}
+
+{% if enable_testing -%}
+# Run all tests
+test:
+    {{UV_RUN}} pytest
+
+# Run tests with verbose output
+test-verbose:
+    {{UV_RUN}} pytest -vv
+
+# Run tests for specific file or directory
+test-file path:
+    {{UV_RUN}} pytest {{path}} -v
+
+# Run tests matching a keyword expression
+test-match expr:
+    {{UV_RUN}} pytest -k "{{expr}}" -v
+
+# Run only unit tests
+test-unit:
+    {{UV_RUN}} pytest -m unit
+
+# Run only integration tests
+test-integration:
+    {{UV_RUN}} pytest -m integration
+
+# Run tests with coverage report
+test-coverage:
+    {{UV_RUN}} pytest --cov={{ package_name }} --cov-report=html --cov-report=term
+
+# Run tests with coverage and fail if below threshold
+test-coverage-strict threshold="80":
+    {{UV_RUN}} pytest --cov={{ package_name }} --cov-report=term --cov-fail-under={{threshold}}
+
+# Re-run only failed tests from last run
+test-failed:
+    {{UV_RUN}} pytest --lf -v
+
+{% endif -%}
+{% if enable_type_checking -%}
+# Run type checking with Pyright
+typecheck:
+    {{UV_RUN}} pyright{% if project_type == 'monorepo' %} .{% endif %}
+
+{% endif -%}
+# Format code with Ruff
+format:
+    {{UV_RUN}} ruff format .
+    {{UV_RUN}} ruff check --fix .
+    @echo "✓ Code formatted"
+
+# Check code formatting without making changes
+format-check:
+    {{UV_RUN}} ruff format --check .
+    {{UV_RUN}} ruff check .
+
+# Lint code with Ruff
+lint:
+    {{UV_RUN}} ruff check .
+
+# Fix auto-fixable linting issues
+lint-fix:
+    {{UV_RUN}} ruff check --fix .
+
+# Run all quality checks
+check:{% if enable_type_checking %} typecheck{% endif %} lint
+    @echo "✓ All quality checks passed"
+
+{% if database_type == 'supabase' and use_supabase_local -%}
+# Start local Supabase stack
+supabase-start:
+    cd supabase && docker compose up -d
+    @echo ""
+    @echo "✓ Supabase is now running locally!"
+    @echo ""
+    @echo "Services:"
+    @echo "  Studio:     http://localhost:58172"
+    @echo "  REST API:   http://localhost:58167/rest/v1/"
+    @echo "  Auth API:   http://localhost:58167/auth/v1/"
+    @echo "  Inbucket:   http://localhost:58170 (Email testing)"
+    @echo ""
+    @echo "Database connection (session mode):"
+    @echo "  postgres://postgres:<password>@localhost:58173/postgres"
+
+# Stop local Supabase services
+supabase-stop:
+    cd supabase && docker compose down
+    @echo "✓ Supabase stopped"
+
+# Reset local Supabase (DESTRUCTIVE!)
+supabase-reset:
+    @echo "⚠️  This will drop all data and volumes!"
+    @read -p "Continue? [y/N] " -n 1 -r && echo && [[ $$REPLY =~ ^[Yy]$$ ]] && cd supabase && docker compose down -v && rm -rf volumes/db/data/ && docker compose up -d
+
+# View Supabase logs
+supabase-logs:
+    cd supabase && docker compose logs -f
+
+# View logs for specific Supabase service
+supabase-logs-service service:
+    cd supabase && docker compose logs -f {{service}}
+
+# Open Supabase Studio in browser
+db-studio:
+    {% raw %}{% if os() == "macos" %}{% endraw %}
+    open http://localhost:58172
+    {% raw %}{% elif os() == "linux" %}{% endraw %}
+    xdg-open http://localhost:58172
+    {% raw %}{% endif %}{% endraw %}
+
+# Connect to local Supabase PostgreSQL via psql
+db-psql *args='':
+    cd supabase && docker compose exec db sh -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -d postgres {{args}}'
+
+# Apply Supabase migrations
+migrate:
+    supabase db push
+
+# Create new Supabase migration
+migrate-new name:
+    supabase migration new {{name}}
+
+# Show migration status
+migrate-status:
+    supabase migration list
+
+{% elif database_type == 'postgresql' and use_docker -%}
+# Start database and services
+db-start:
+    docker compose up -d
+    @echo "✓ Database ready at: postgres://postgres:postgres@localhost:5432/{{ project_slug }}"
+
+# Stop all services
+db-stop:
+    docker compose down
+    @echo "✓ Services stopped"
+
+# Reset database (DESTRUCTIVE!)
+db-reset:
+    @echo "⚠️  This will destroy all database data!"
+    @read -p "Continue? [y/N] " -n 1 -r && echo && [[ $$REPLY =~ ^[Yy]$$ ]] && docker compose down -v && docker compose up -d && sleep 2{% if use_alembic %} && {{UV_RUN}} alembic upgrade head{% endif %}
+
+# View database logs
+db-logs:
+    docker compose logs -f db
+
+# Connect to database via psql
+db-psql:
+    docker compose exec db psql -U postgres -d {{ project_slug }}
+
+{% endif -%}
+{% if use_alembic -%}
+# Run database migrations
+migrate:
+    {{UV_RUN}} alembic upgrade head
+    @echo "✓ Migrations applied"
+
+# Create new migration
+migrate-new message:
+    {{UV_RUN}} alembic revision --autogenerate -m "{{message}}"
+    @echo "✓ Migration created"
+
+# Rollback last migration
+migrate-down:
+    {{UV_RUN}} alembic downgrade -1
+    @echo "✓ Migration rolled back"
+
+# Show migration history
+migrate-history:
+    {{UV_RUN}} alembic history
+
+# Show current migration
+migrate-current:
+    {{UV_RUN}} alembic current
+
+{% endif -%}
+{% if use_docker -%}
+# Build Docker image
+docker-build:
+    docker compose build
+
+# Start all Docker services
+docker-up:
+    docker compose up -d
+    @echo "✓ Services started"
+
+# Stop all Docker services
+docker-down:
+    docker compose down
+    @echo "✓ Services stopped"
+
+# View logs from all services
+docker-logs:
+    docker compose logs -f
+
+# View logs from specific service
+docker-logs-service service:
+    docker compose logs -f {{service}}
+
+# Restart specific service
+docker-restart service:
+    docker compose restart {{service}}
+
+{% endif -%}
+# Clean up Python cache files
+clean:
+    find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
+    find . -type f -name "*.pyc" -delete 2>/dev/null || true
+    find . -type d -name ".pytest_cache" -exec rm -r {} + 2>/dev/null || true
+    find . -type d -name ".ruff_cache" -exec rm -r {} + 2>/dev/null || true
+    @echo "✓ Cache cleaned"
+
+# Clean up build artifacts
+clean-build: clean
+    find . -type d -name "*.egg-info" -exec rm -r {} + 2>/dev/null || true
+    find . -type d -name "build" -exec rm -r {} + 2>/dev/null || true
+    find . -type d -name "dist" -exec rm -r {} + 2>/dev/null || true
+    @echo "✓ Build artifacts cleaned"
+
+# Clean everything including uv cache
+clean-all: clean-build
+    rm -rf .venv 2>/dev/null || true
+    @echo "✓ All artifacts cleaned (including .venv)"
+
+# Show environment variables (filtered for safety)
+@env:
+    env | sort | grep -v -E '(PASSWORD|SECRET|KEY|TOKEN|SUPABASE_SERVICE_ROLE)'
+
+# Check tool versions
+@versions:
+    @echo "Tool versions:"
+    @echo "  Python:  $$(python --version 2>&1 | cut -d' ' -f2)"
+    @echo "  UV:      $$(uv --version 2>&1 | cut -d' ' -f2)"
+    @echo "  Ruff:    $$({{UV_RUN}} ruff --version 2>&1 | cut -d' ' -f2)"
+    {% if enable_type_checking -%}
+    @echo "  Pyright: $$({{UV_RUN}} pyright --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+    {% endif -%}
+    {% if enable_testing -%}
+    @echo "  pytest:  $$({{UV_RUN}} pytest --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+    {% endif %}
+
+# Open project documentation
+@docs:
+    {% raw %}{% if os() == "macos" %}{% endraw %}
+    open README.md
+    {% raw %}{% elif os() == "linux" %}{% endraw %}
+    xdg-open README.md
+    {% raw %}{% endif %}{% endraw %}
