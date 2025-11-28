@@ -15,8 +15,9 @@ A production-ready Copier template for Python projects, based on analysis of 40+
 ## Quick Start
 
 ```bash
-# Install Copier
+# Install Copier and required extensions
 uv tool install copier
+pip install copier-templates-extensions  # Required for git config defaults
 
 # Generate a new project
 copier copy gh:joshm1/template-python-project /path/to/new/project
@@ -24,6 +25,8 @@ copier copy gh:joshm1/template-python-project /path/to/new/project
 # Or use the local template during development
 copier copy /path/to/template-python-project /path/to/new/project
 ```
+
+> **Note:** The `copier-templates-extensions` package is required for author name/email to default to your `git config user.name` and `git config user.email` values.
 
 ## Template Structure
 
@@ -77,42 +80,42 @@ Multi-package workspaces with shared dependencies.
 
 ## Configuration Options
 
-The template supports extensive configuration through Copier prompts:
+### Always Included (Not Configurable)
+- Pyright strict type checking
+- pytest testing infrastructure
+- pre-commit hooks
+- justfile task runner
+- Claude Code integration (commands, agents, skills, MCP servers)
+- rich terminal output
+- Click for CLI projects
+- Hatchling build system
+- VS Code devcontainer
 
-### Basic Information
+### Configurable Options
+
+**Basic Information:**
 - Project name, slug, and package name
-- Author name and email
+- Author name and email (defaults to git config)
 - Project description
 
-### Project Type
-- CLI Tool, API Service, Library, or Monorepo
+**Project Type:**
+- CLI Tool, API Service, Library, or Monorepo (UV workspaces)
 
-### Python Configuration
+**Python Configuration:**
 - Python version (3.12 or 3.13)
-- Hatchling build system (for distributable packages)
 
-### Infrastructure
-- Docker and docker-compose
-- VS Code devcontainer
+**Infrastructure:**
+- Docker and docker-compose (default: enabled)
 - Database type (None, PostgreSQL, Supabase, SQLite)
-- Alembic migrations
+- Alembic migrations (for PostgreSQL)
 - Local Supabase stack
 
-### Development Tools
+**Development Tools:**
 - Ruff strictness (minimal/recommended/strict)
 - Dependency pinning strategy (flexible/conservative/strict)
-- Pyright type checking
-- pytest testing infrastructure
 
-### Documentation
+**Documentation:**
 - Documentation tier (minimal/standard/comprehensive)
-
-### Claude Code Integration
-- Claude Code configuration
-- Slash commands
-- Custom agents
-- Skills
-- MCP servers
 
 ## Development Tools
 
@@ -120,8 +123,8 @@ All generated projects include:
 
 - **UV**: Fast Python package manager
 - **Ruff**: Lightning-fast linter and formatter
-- **Pyright**: Static type checker (optional)
-- **pytest**: Testing framework (optional)
+- **Pyright**: Static type checker (strict mode)
+- **pytest**: Testing framework with parallel execution
 - **pre-commit**: Git hooks for code quality
 - **just**: Command runner (replaces Make)
 

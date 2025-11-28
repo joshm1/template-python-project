@@ -99,11 +99,9 @@ just install
 # List all packages
 just list-packages
 
-{% if enable_testing -%}
 # Run all tests
 just test
 
-{% endif -%}
 # Format all code
 just format
 ```
@@ -142,19 +140,15 @@ just dev
 just run --help
 
 {% endif -%}
-{% if enable_testing -%}
 # Run tests
 just test
 
 # Run tests with coverage
 just test-coverage
 
-{% endif -%}
-{% if enable_type_checking -%}
 # Type checking
 just typecheck
 
-{% endif -%}
 # Format code
 just format
 
@@ -243,7 +237,6 @@ just docker-logs
 ```
 
 {% endif -%}
-{% if enable_testing -%}
 ## Testing
 
 ```bash
@@ -266,8 +259,6 @@ just test-unit
 just test-integration
 ```
 
-{% endif -%}
-{% if enable_type_checking -%}
 ## Type Checking
 
 This project uses [Pyright](https://github.com/microsoft/pyright) for static type checking with strict mode enabled.
@@ -276,55 +267,38 @@ This project uses [Pyright](https://github.com/microsoft/pyright) for static typ
 just typecheck
 ```
 
-{% endif -%}
 ## Code Quality
 
 The project uses the following tools for code quality:
 
 - **[Ruff](https://github.com/astral-sh/ruff)**: Fast Python linter and formatter{% if ruff_strictness == 'strict' %} (strict mode){% elif ruff_strictness == 'recommended' %} (recommended rules){% endif %}
 
-{% if enable_type_checking -%}
 - **[Pyright](https://github.com/microsoft/pyright)**: Static type checker (strict mode)
-{% endif -%}
-{% if enable_testing -%}
 - **[pytest](https://pytest.org/)**: Testing framework
-{% endif %}
 
 ```bash
 # Run all quality checks
 just check
 ```
 
-{% if setup_claude_code -%}
 ## Claude Code Integration
 
 This project includes [Claude Code](https://claude.com/claude-code) configuration for AI-assisted development.
 
 ### Available Commands
 
-{% if include_slash_commands -%}
 Slash commands (use in Claude Code chat):
 - `/prime` - Prime Claude with project context
 - `/git-commit` - Create a conventional commit
-{% if enable_testing -%}
 - `/run-all-tests` - Run all tests with coverage
-{% endif -%}
 - `/quality-check` - Run all quality checks
 
-{% endif -%}
-{% if include_custom_agents -%}
 Custom agents:
-{% if enable_testing -%}
 - `test-runner` - Intelligent test execution and debugging
-{% endif -%}
-{% if enable_type_checking -%}
 - `code-quality-check` - Fast type checking and linting
-{% endif %}
 
-{% endif -%}
 See `.claude/` directory for full configuration.
 
-{% endif -%}
 ## Project Structure
 
 ```
@@ -350,13 +324,11 @@ See `.claude/` directory for full configuration.
 │       └── ...        # Library code
 {% endif -%}
 {% endif -%}
-{% if enable_testing -%}
 ├── tests/
 │   ├── unit/          # Unit tests
 │   ├── integration/   # Integration tests
 │   ├── fixtures/      # Test fixtures
 │   └── conftest.py    # pytest configuration
-{% endif -%}
 {% if documentation_tier != 'minimal' -%}
 ├── docs/
 {% if documentation_tier == 'standard' or documentation_tier == 'comprehensive' -%}
@@ -374,16 +346,10 @@ See `.claude/` directory for full configuration.
 {% if database_type == 'supabase' and use_supabase_local -%}
 ├── supabase/          # Supabase configuration
 {% endif -%}
-{% if setup_claude_code -%}
 ├── .claude/           # Claude Code configuration
-{% endif -%}
-{% if use_devcontainer -%}
 ├── .devcontainer/     # VS Code devcontainer
-{% endif -%}
 ├── pyproject.toml     # Project configuration
-{% if enable_type_checking -%}
 ├── pyrightconfig.json # Type checking configuration
-{% endif -%}
 ├── justfile           # Task runner
 └── README.md          # This file
 ```
@@ -391,10 +357,8 @@ See `.claude/` directory for full configuration.
 {% if documentation_tier == 'standard' or documentation_tier == 'comprehensive' -%}
 ## Documentation
 
-{% if setup_claude_code -%}
 - `CLAUDE.md` - AI agent guide with project patterns and best practices
 - `docs/agent/` - AI-specific documentation
-{% endif -%}
 - `docs/code-style/` - Code style guides and patterns
 {% if documentation_tier == 'comprehensive' -%}
 - `docs/architecture/` - Architecture diagrams and design decisions
@@ -447,9 +411,7 @@ See `.env.example` for available environment variables.
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
 4. Run quality checks (`just check`)
-{% if enable_testing -%}
 5. Run tests (`just test`)
-{% endif -%}
 6. Commit your changes (`git commit -m 'Add amazing feature'`)
 7. Push to the branch (`git push origin feature/amazing-feature`)
 8. Open a Pull Request

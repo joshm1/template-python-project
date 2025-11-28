@@ -19,17 +19,13 @@ default:
 install:
     uv sync{% if project_type == 'monorepo' %} --all-packages{% endif %}
 
-    {% if setup_claude_code and include_slash_commands -%}
     @echo "✓ Dependencies installed"
     @echo ""
     @echo "Claude Code slash commands available:"
     @echo "  /prime          - Prime Claude with project context"
     @echo "  /git-commit     - Create a conventional commit"
-    {% if enable_testing -%}
     @echo "  /run-all-tests  - Run all tests with coverage"
-    {% endif -%}
     @echo "  /quality-check  - Run all quality checks"
-    {% endif %}
 
 # Update dependencies to latest versions
 update:
@@ -67,7 +63,6 @@ dev:
 
 {% endif -%}
 
-{% if enable_testing -%}
 # Run all tests
 test:
     {{UV_RUN}} pytest
@@ -104,13 +99,10 @@ test-coverage-strict threshold="80":
 test-failed:
     {{UV_RUN}} pytest --lf -v
 
-{% endif -%}
-{% if enable_type_checking -%}
 # Run type checking with Pyright
 typecheck:
     {{UV_RUN}} pyright{% if project_type == 'monorepo' %} .{% endif %}
 
-{% endif -%}
 # Format code with Ruff
 format:
     {{UV_RUN}} ruff format .
@@ -131,7 +123,7 @@ lint-fix:
     {{UV_RUN}} ruff check --fix .
 
 # Run all quality checks
-check:{% if enable_type_checking %} typecheck{% endif %} lint
+check: typecheck lint
     @echo "✓ All quality checks passed"
 
 {% if database_type == 'supabase' and use_supabase_local -%}
@@ -300,12 +292,8 @@ clean-all: clean-build
     @echo "  Python:  $$(python --version 2>&1 | cut -d' ' -f2)"
     @echo "  UV:      $$(uv --version 2>&1 | cut -d' ' -f2)"
     @echo "  Ruff:    $$({{UV_RUN}} ruff --version 2>&1 | cut -d' ' -f2)"
-    {% if enable_type_checking -%}
     @echo "  Pyright: $$({{UV_RUN}} pyright --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
-    {% endif -%}
-    {% if enable_testing -%}
     @echo "  pytest:  $$({{UV_RUN}} pytest --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
-    {% endif %}
 
 # Open project documentation
 @docs:

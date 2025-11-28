@@ -10,8 +10,13 @@
 # - Claude Code integration (.claude/ with commands, agents, skills, MCP servers)
 # - rich terminal output
 # - Click for CLI
+# - Hatchling build system
+# - VS Code devcontainer
 
 _min_copier_version: "9.0.0"
+
+_jinja_extensions:
+  - extensions.GitConfigContext
 
 # Basic Project Information
 project_name:
@@ -37,10 +42,12 @@ description:
 author_name:
   type: str
   help: "Author name"
+  default: "{{ git_user_name }}"
 
 author_email:
   type: str
   help: "Author email"
+  default: "{{ git_user_email }}"
 
 # Project Type
 project_type:
@@ -50,7 +57,7 @@ project_type:
     cli: "CLI Tool (command-line application)"
     api: "API Service (FastAPI REST API)"
     library: "Library (distributable package)"
-    monorepo: "Monorepo (multiple packages)"
+    monorepo: "Monorepo (multiple Python packages via UV workspaces)"
   default: "api"
 
 # Python Configuration
@@ -62,21 +69,10 @@ python_version:
     "3.13": "Python 3.13 (latest, recommended)"
   default: "3.13"
 
-use_hatchling:
-  type: bool
-  help: "Use Hatchling build system? (for distributable packages)"
-  default: "{{ project_type in ['library', 'cli'] }}"
-  when: "{{ project_type != 'monorepo' }}"
-
 # Infrastructure
 use_docker:
   type: bool
   help: "Include Docker/Docker Compose configuration?"
-  default: "{{ project_type in ['api', 'monorepo'] }}"
-
-use_devcontainer:
-  type: bool
-  help: "Include VS Code devcontainer configuration?"
   default: true
 
 database_type:
@@ -142,6 +138,7 @@ _templates_suffix: ".jinja"
 _exclude:
   - "copier.yml"
   - "copier.yaml"
+  - "extensions.py"
   - "~*"
   - "*.py[co]"
   - "__pycache__"
