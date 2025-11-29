@@ -6,13 +6,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **Copier template** for generating modern Python projects. It is NOT a Python project itself - it's a meta-project that generates Python projects using the Copier templating engine.
 
-The template generates projects with:
-- UV package manager
-- Pyright strict type checking
-- pytest with comprehensive fixtures
-- Docker and devcontainer support
-- FastAPI (for API projects)
-- Claude Code integration (.claude/ with commands, agents, skills)
+## Generated Project Capabilities
+
+### Project Types
+- **CLI** - Command-line apps with Click + Rich for beautiful terminal output
+- **API** - FastAPI REST services with async support, Pydantic v2 validation
+- **Library** - Distributable packages with Hatchling build system
+- **Monorepo** - UV workspaces with multiple packages
+
+### Database Support
+All database options use async drivers for non-blocking I/O:
+- **PostgreSQL** - SQLAlchemy 2.0 async + asyncpg driver + Alembic migrations
+- **SQLite** - SQLAlchemy 2.0 async + aiosqlite driver + Alembic migrations
+- **Supabase** - Official supabase-py client + httpx for async requests
+- **None** - No database dependencies
+
+### Type Safety (Pyright Strict)
+Generated projects use pyright in strict mode with comprehensive checks:
+- All `reportUnknown*Type` checks enabled
+- All `reportOptional*` checks enabled
+- Unused code detection (`reportUnused*`)
+- `reportUnnecessaryTypeIgnoreComment` to catch stale ignores
+- Custom stubs directory (`stubs/`) for third-party type overrides
+
+### Testing Infrastructure
+- **pytest** with async support via `pytest-asyncio` (mode="auto")
+- **pytest-xdist** for parallel test execution (`-n=auto --dist=worksteal`)
+- **pytest-timeout** with 20-second default per test
+- **pytest-cov** for coverage reporting (API projects)
+- **httpx** for testing FastAPI with `AsyncClient`
+- Test markers: `unit`, `integration`, `slow`, `e2e`, `supabase`
+
+### CLI Projects (Click)
+- Click command groups with `--help` auto-generation
+- Rich console output for formatting
+- Loguru for structured logging
+- Entry point defined in pyproject.toml: `project-slug = "package_name.cli:main"`
+
+### API Projects (FastAPI)
+- Async endpoints with `async def`
+- Pydantic v2 models for request/response validation
+- pydantic-settings for configuration from environment
+- Uvicorn ASGI server with hot reload
+- Integration tests using `httpx.AsyncClient`
 
 ## Common Commands
 
@@ -67,15 +103,28 @@ Key variables that affect generation:
 - `documentation_tier`: minimal, standard, comprehensive
 
 ### Meta-Testing Infrastructure
-Tests validate the template generates working projects:
-- `tests/fixtures/copier_configs.py` - Test configuration matrix (6 configs)
-- `tests/test_generation.py` - Basic generation tests (fast)
-- `tests/test_quality_checks.py` - Quality checks: pyright, ruff (slow)
-- `tests/conftest.py` - Shared fixtures including pre-generated test project
+The template has comprehensive tests that validate generated projects work correctly:
+
+**Test Configurations** (6 total in `tests/fixtures/copier_configs.py`):
+- `CLI_SIMPLE` - CLI with no database
+- `CLI_WITH_SQLITE` - CLI with SQLite + Alembic
+- `API_POSTGRES` - FastAPI + PostgreSQL + Alembic
+- `API_SUPABASE` - FastAPI + Supabase
+- `API_MINIMAL` - FastAPI with no database
+- `LIBRARY_SIMPLE` - Distributable library
+
+**Test Coverage**:
+- `test_generation.py` - Template generates without errors, expected files exist, no unrendered Jinja2
+- `test_quality_checks.py` - Generated projects pass:
+  - `uv sync` - Dependencies install correctly
+  - `pyright` - Type checking passes in strict mode
+  - `ruff check` - Linting passes
+  - `ruff format` - Code is formattable
+  - `pytest --collect-only` - Tests can be discovered
 
 ### Test Project
 - `test-generated-api-sqlite/` - Pre-generated project for quick quality checks
-- Uses API + SQLite configuration (exercises most code paths)
+- Uses API + SQLite configuration (exercises most code paths without external services)
 - Preserves `.venv` across regenerations for speed
 
 ## Test Markers
@@ -89,11 +138,15 @@ uv run pytest tests/ -m "not docker"
 
 # Run specific configuration
 uv run pytest tests/ -k "cli_simple"
+
+# Run smoke tests (subset of configs)
+uv run pytest tests/ -k "cli_simple or api_postgres or library_simple"
 ```
 
 ## Key Files to Understand
 
-1. **copier.yml** - All template variables, their types, defaults, and when they appear
-2. **template/pyproject.toml.jinja** - Generated project's dependencies and configuration
+1. **copier.yml** - All template variables, their types, defaults, and conditional visibility
+2. **template/pyproject.toml.jinja** - Generated project's dependencies, pyright config, pytest config
 3. **template/justfile.jinja** - Generated project's task runner recipes
-4. **tests/fixtures/copier_configs.py** - All test configurations with expected/excluded files
+4. **template/tests/conftest.py.jinja** - Generated project's pytest fixtures and markers
+5. **tests/fixtures/copier_configs.py** - All test configurations with expected/excluded files
