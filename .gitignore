@@ -44,3 +44,17 @@ test-generated-*/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Secrets and local config
+.env
+.env.local
+*.env.local
+*.local
+settings.local.json
+.claude/settings.local.json
+
+# Certificates and keys
+*.pem
+*.key
+*.p12
+*.pfx
