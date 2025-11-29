@@ -8,8 +8,6 @@ set shell := ["bash", "-uc"]
 # Load .env files automatically
 set dotenv-load := true
 
-# Variables
-UV_RUN := "uv run"
 
 # List all available commands
 default:
@@ -41,25 +39,25 @@ copier-update:
 {% if project_type == 'cli' -%}
 # Start development CLI (show help)
 dev:
-    {{UV_RUN}} {{ project_slug }} --help
+    uv run {{ project_slug }} --help
 
 # Run CLI with arguments
 run *args:
-    {{UV_RUN}} {{ project_slug }} {{args}}
+    uv run {{ project_slug }} {{args}}
 
 {% elif project_type == 'api' -%}
 # Start development server
 dev:
-    {{UV_RUN}} uvicorn {{ package_name }}.main:app --reload --port 8000
+    uv run uvicorn {{ package_name }}.main:app --reload --port 8000
 
 # Start server with custom host/port
 serve host="0.0.0.0" port="8000":
-    {{UV_RUN}} uvicorn {{ package_name }}.main:app --host {{host}} --port {{port}}
+    uv run uvicorn {{ package_name }}.main:app --host {{host}} --port {{port}}
 
 {% elif project_type == 'library' -%}
 # Run library module
 dev:
-    {{UV_RUN}} python -m {{ package_name }}
+    uv run python -m {{ package_name }}
 
 {% elif project_type == 'monorepo' -%}
 # List all workspace packages
@@ -70,62 +68,62 @@ dev:
 
 # Run all tests
 test:
-    {{UV_RUN}} pytest
+    uv run pytest
 
 # Run tests with verbose output
 test-verbose:
-    {{UV_RUN}} pytest -vv
+    uv run pytest -vv
 
 # Run tests for specific file or directory
 test-file path:
-    {{UV_RUN}} pytest {{path}} -v
+    uv run pytest {{path}} -v
 
 # Run tests matching a keyword expression
 test-match expr:
-    {{UV_RUN}} pytest -k "{{expr}}" -v
+    uv run pytest -k "{{expr}}" -v
 
 # Run only unit tests
 test-unit:
-    {{UV_RUN}} pytest -m unit
+    uv run pytest -m unit
 
 # Run only integration tests
 test-integration:
-    {{UV_RUN}} pytest -m integration
+    uv run pytest -m integration
 
 # Run tests with coverage report
 test-coverage:
-    {{UV_RUN}} pytest --cov={{ package_name }} --cov-report=html --cov-report=term
+    uv run pytest --cov={{ package_name }} --cov-report=html --cov-report=term
 
 # Run tests with coverage and fail if below threshold
 test-coverage-strict threshold="80":
-    {{UV_RUN}} pytest --cov={{ package_name }} --cov-report=term --cov-fail-under={{threshold}}
+    uv run pytest --cov={{ package_name }} --cov-report=term --cov-fail-under={{threshold}}
 
 # Re-run only failed tests from last run
 test-failed:
-    {{UV_RUN}} pytest --lf -v
+    uv run pytest --lf -v
 
 # Run type checking with Pyright
 typecheck:
-    {{UV_RUN}} pyright{% if project_type == 'monorepo' %} .{% endif %}
+    uv run pyright{% if project_type == 'monorepo' %} .{% endif %}
 
 # Format code with Ruff
 format:
-    {{UV_RUN}} ruff format .
-    {{UV_RUN}} ruff check --fix .
+    uv run ruff format .
+    uv run ruff check --fix .
     @echo "✓ Code formatted"
 
 # Check code formatting without making changes
 format-check:
-    {{UV_RUN}} ruff format --check .
-    {{UV_RUN}} ruff check .
+    uv run ruff format --check .
+    uv run ruff check .
 
 # Lint code with Ruff
 lint:
-    {{UV_RUN}} ruff check .
+    uv run ruff check .
 
 # Fix auto-fixable linting issues
 lint-fix:
-    {{UV_RUN}} ruff check --fix .
+    uv run ruff check --fix .
 
 # Run all quality checks
 check: typecheck lint
@@ -203,7 +201,7 @@ db-stop:
 # Reset database (DESTRUCTIVE!)
 db-reset:
     @echo "⚠️  This will destroy all database data!"
-    @read -p "Continue? [y/N] " -n 1 -r && echo && [[ $$REPLY =~ ^[Yy]$$ ]] && docker compose down -v && docker compose up -d && sleep 2{% if use_alembic %} && {{UV_RUN}} alembic upgrade head{% endif %}
+    @read -p "Continue? [y/N] " -n 1 -r && echo && [[ $$REPLY =~ ^[Yy]$$ ]] && docker compose down -v && docker compose up -d && sleep 2{% if use_alembic %} && uv run alembic upgrade head{% endif %}
 
 # View database logs
 db-logs:
@@ -217,26 +215,26 @@ db-psql:
 {% if use_alembic -%}
 # Run database migrations
 migrate:
-    {{UV_RUN}} alembic upgrade head
+    uv run alembic upgrade head
     @echo "✓ Migrations applied"
 
 # Create new migration
 migrate-new message:
-    {{UV_RUN}} alembic revision --autogenerate -m "{{message}}"
+    uv run alembic revision --autogenerate -m "{{message}}"
     @echo "✓ Migration created"
 
 # Rollback last migration
 migrate-down:
-    {{UV_RUN}} alembic downgrade -1
+    uv run alembic downgrade -1
     @echo "✓ Migration rolled back"
 
 # Show migration history
 migrate-history:
-    {{UV_RUN}} alembic history
+    uv run alembic history
 
 # Show current migration
 migrate-current:
-    {{UV_RUN}} alembic current
+    uv run alembic current
 
 {% endif -%}
 # Build Docker image
@@ -294,9 +292,9 @@ clean-all: clean-build
     @echo "Tool versions:"
     @echo "  Python:  $$(python --version 2>&1 | cut -d' ' -f2)"
     @echo "  UV:      $$(uv --version 2>&1 | cut -d' ' -f2)"
-    @echo "  Ruff:    $$({{UV_RUN}} ruff --version 2>&1 | cut -d' ' -f2)"
-    @echo "  Pyright: $$({{UV_RUN}} pyright --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
-    @echo "  pytest:  $$({{UV_RUN}} pytest --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+    @echo "  Ruff:    $$(uv run ruff --version 2>&1 | cut -d' ' -f2)"
+    @echo "  Pyright: $$(uv run pyright --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+    @echo "  pytest:  $$(uv run pytest --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
 
 # Open project documentation
 @docs:
