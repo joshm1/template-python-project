@@ -1,6 +1,6 @@
 # Modern Python Project Template
 
-A production-ready Copier template for Python projects with async support, strict typing, and comprehensive testing.
+An opinionated Copier template for Python projects. This is my personal setup for new projects - maybe you'll find it useful too.
 
 ## Features
 
