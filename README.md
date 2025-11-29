@@ -1,16 +1,16 @@
 # Modern Python Project Template
 
-A production-ready Copier template for Python projects, based on analysis of 40+ real-world Python projects.
+A production-ready Copier template for Python projects with async support, strict typing, and comprehensive testing.
 
 ## Features
 
-- **Multiple Project Types**: CLI tools, API services, libraries, and monorepos
-- **Modern Tooling**: UV package manager, Ruff linter, Pyright type checker
-- **Testing Infrastructure**: pytest with comprehensive fixtures and markers
-- **Docker Support**: Multi-stage builds with docker-compose
-- **Database Options**: PostgreSQL, Supabase, SQLite
-- **Claude Code Integration**: Custom agents, slash commands, skills, and MCP servers
-- **Tiered Documentation**: Minimal, standard, or comprehensive documentation levels
+- **Project Types**: CLI (Click + Rich), API (FastAPI), Library, Monorepo (UV workspaces)
+- **Database Support**: PostgreSQL, SQLite, Supabase - all with async drivers
+- **Strict Typing**: Pyright in strict mode with comprehensive checks
+- **Async Testing**: pytest-asyncio, pytest-xdist (parallel), httpx for API tests
+- **Modern Tooling**: UV package manager, Ruff linter/formatter, pre-commit hooks
+- **Docker**: Multi-stage builds, docker-compose, VS Code devcontainer
+- **Claude Code**: Custom agents, slash commands, skills, MCP servers
 
 ## Quick Start
 
@@ -21,129 +21,72 @@ uv tool install copier
 # Generate a new project
 copier copy gh:joshm1/template-python-project /path/to/new/project
 
-# Or use the local template during development
+# Or use locally during development
 copier copy /path/to/template-python-project /path/to/new/project
 ```
 
-## Template Structure
+## Project Types
 
-```
-template-python-project/
-├── copier.yml              # Template configuration (186 lines)
-├── template/               # Template files
-│   └── {{project_slug}}/   # Generated project root
-│       ├── .devcontainer/  # VS Code devcontainer
-│       ├── .github/        # GitHub Actions workflows
-│       ├── .claude/        # Claude Code configuration
-│       │   ├── agents/     # Custom agents
-│       │   ├── commands/   # Slash commands
-│       │   └── skills/     # Skills
-│       ├── src/            # Source code
-│       │   └── {{package_name}}/
-│       │       ├── api/    # API routes (for API projects)
-│       │       ├── core/   # Core configuration
-│       │       ├── models/ # Database models
-│       │       ├── repositories/ # Repository pattern
-│       │       └── schemas/ # Pydantic schemas
-│       ├── tests/          # Test files
-│       │   ├── unit/
-│       │   ├── integration/
-│       │   ├── fixtures/
-│       │   └── data/
-│       ├── docs/           # Documentation
-│       │   ├── agent/      # AI agent docs
-│       │   └── code-style/ # Code style guides
-│       ├── alembic/        # Database migrations
-│       ├── supabase/       # Supabase configuration
-│       ├── packages/       # Monorepo packages
-│       ├── scripts/        # Utility scripts
-│       └── stubs/          # Type stubs
-└── README.md               # This file
-```
+| Type | Stack |
+|------|-------|
+| **CLI** | Click + Rich + Loguru |
+| **API** | FastAPI + Pydantic v2 + Uvicorn |
+| **Library** | Hatchling build system |
+| **Monorepo** | UV workspaces |
 
-## Supported Project Types
+## Database Options
 
-### CLI Tool
-Command-line applications using Click, with rich terminal output.
+| Database | Driver | Migrations |
+|----------|--------|------------|
+| PostgreSQL | SQLAlchemy 2.0 + asyncpg | Alembic |
+| SQLite | SQLAlchemy 2.0 + aiosqlite | Alembic |
+| Supabase | supabase-py + httpx | Supabase migrations |
 
-### API Service
-FastAPI-based REST APIs with optional database integration.
+## Always Included
 
-### Library
-Distributable Python packages with proper packaging metadata.
-
-### Monorepo
-Multi-package workspaces with shared dependencies.
+- **Pyright** strict mode with all `reportUnknown*` and `reportOptional*` checks
+- **pytest** with async support, parallel execution, timeout protection
+- **Ruff** for linting and formatting
+- **pre-commit** hooks
+- **justfile** task runner
+- **Docker** and VS Code devcontainer
+- **Claude Code** integration
 
 ## Configuration Options
 
-### Always Included (Not Configurable)
-- Pyright strict type checking
-- pytest testing infrastructure
-- pre-commit hooks
-- justfile task runner
-- Claude Code integration (commands, agents, skills, MCP servers)
-- rich terminal output
-- Click for CLI projects
-- Hatchling build system
-- VS Code devcontainer
+| Option | Choices |
+|--------|---------|
+| Python version | 3.12, 3.13 |
+| Database | None, PostgreSQL, SQLite, Supabase |
+| Ruff strictness | minimal, recommended, strict |
+| Documentation | minimal, standard, comprehensive |
 
-### Configurable Options
+## Development
 
-**Basic Information:**
-- Project name, slug, and package name
-- Project description
+```bash
+# Install dependencies
+just install
 
-**Project Type:**
-- CLI Tool, API Service, Library, or Monorepo (UV workspaces)
+# Generate test project
+just generate-dev /tmp/test-project
 
-**Python Configuration:**
-- Python version (3.12 or 3.13)
+# Run template tests
+just test-template
 
-**Infrastructure:**
-- Docker and docker-compose (default: enabled)
-- Database type (None, PostgreSQL, Supabase, SQLite)
-- Alembic migrations (for PostgreSQL)
-- Local Supabase stack
+# Run fast tests only
+just test-template-fast
+```
 
-**Development Tools:**
-- Ruff strictness (minimal/recommended/strict)
-- Dependency pinning strategy (flexible/conservative/strict)
+## Template Testing
 
-**Documentation:**
-- Documentation tier (minimal/standard/comprehensive)
+The template includes meta-tests that validate generated projects:
 
-## Development Tools
-
-All generated projects include:
-
-- **UV**: Fast Python package manager
-- **Ruff**: Lightning-fast linter and formatter
-- **Pyright**: Static type checker (strict mode)
-- **pytest**: Testing framework with parallel execution
-- **pre-commit**: Git hooks for code quality
-- **just**: Command runner (replaces Make)
-
-## Planning Documentation
-
-See the planning documents in the parent directory for detailed information:
-
-- `COPIER-TEMPLATE-PLAN-v2.md`: Overview and navigation
-- `plan/02-variables.md`: Template variable definitions
-- `plan/03-directory-structure.md`: Directory layouts by project type
-- `plan/04-*.md`: Individual file templates and configurations
-
-## Next Steps
-
-After creating the base structure, the following template files need to be implemented:
-
-1. Core configuration files (pyproject.toml, pyrightconfig.json, .gitignore)
-2. Documentation templates (CLAUDE.md, README.md, docs/)
-3. Claude Code integration (.claude/*)
-4. Build and task files (justfile, Dockerfile, docker-compose.yml)
-5. Testing infrastructure (conftest.py, pytest configuration)
-6. CI/CD workflows (.github/workflows/)
-7. Development environment (devcontainer)
+- Template generates without errors
+- All expected files exist
+- `uv sync` installs dependencies
+- `pyright` passes in strict mode
+- `ruff check` and `ruff format` pass
+- `pytest` can collect tests
 
 ## License
 
